@@ -1,15 +1,13 @@
+using BudgetWise.Api.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+// ── Pipeline HTTP ──────────────────────────────────────────────────────────
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-app.MapControllers();
+app.UseCorsPolicy();
 
 app.Run();
