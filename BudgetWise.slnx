@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BudgetWise.Application/BudgetWise.Application.csproj" />
+    <Project Path="src/BudgetWise.Domain/BudgetWise.Domain.csproj" />
+    <Project Path="src/BudgetWise.Infrastructure/BudgetWise.Infrastructure.csproj" />
+    <Project Path="src\BudgetWise.Api\BudgetWise.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BudgetWise.IntegrationTests/BudgetWise.IntegrationTests.csproj" />
+    <Project Path="tests/BudgetWise.UnitTests/BudgetWise.UnitTests.csproj" />
+  </Folder>
+</Solution>
