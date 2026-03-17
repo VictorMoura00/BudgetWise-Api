@@ -1,3 +1,9 @@
+# Suba apenas a infra (postgres + pgadmin + seq) para dev local
+#docker compose up -d postgres pgadmin seq
+
+# Ou suba tudo incluindo a API
+#docker compose up -d
+
 services:
 
   # ── API ──────────────────────────────────────────────────────────────────────
@@ -71,6 +77,7 @@ services:
       - "5341:5341"
     environment:
       - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=${SEQ_ADMIN_PASSWORD:-SeqAdmin123!}
     volumes:
       - seq-data:/data
     networks:
