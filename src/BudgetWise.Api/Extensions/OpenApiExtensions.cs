@@ -16,6 +16,7 @@ public static class OpenApiExtensions
                 document.Info.Description = "API de organização financeira pessoal com suporte a grupos familiares.";
 
                 document.Components ??= new OpenApiComponents();
+                document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
                 document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
                 {
                     Type = SecuritySchemeType.Http,
