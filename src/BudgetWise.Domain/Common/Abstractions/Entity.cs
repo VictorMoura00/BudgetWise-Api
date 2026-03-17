@@ -1,5 +1,3 @@
-using System;
-
 namespace BudgetWise.Domain.Common.Abstractions;
 
 public abstract class Entity : IEquatable<Entity>

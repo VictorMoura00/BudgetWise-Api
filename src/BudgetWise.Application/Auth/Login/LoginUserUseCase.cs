@@ -1,7 +1,7 @@
 ﻿using BudgetWise.Application.Auth.Common;
+using BudgetWise.Application.Identity;
 using BudgetWise.Application.Interfaces;
 using BudgetWise.Domain.Common.Results;
-using BudgetWise.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 

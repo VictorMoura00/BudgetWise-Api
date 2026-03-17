@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace BudgetWise.Infrastructure.Identity;
+namespace BudgetWise.Application.Identity;
 
 public class ApplicationUser : IdentityUser<Guid>
 {

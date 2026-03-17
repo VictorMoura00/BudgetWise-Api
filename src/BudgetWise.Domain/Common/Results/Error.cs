@@ -43,28 +43,28 @@ public record Error
     /// </summary>
     /// <param name="code">Código único do erro.</param>
     /// <param name="description">Descrição detalhada.</param>
-    public static Error Failure(string code, string description) => 
+    public static Error Failure(string code, string description) =>
         new(code, description, ErrorType.Failure);
 
     /// <summary>
     /// Cria um erro de validação (HTTP 400).
     /// Use quando os dados fornecidos pelo cliente estão incorretos.
     /// </summary>
-    public static Error Validation(string code, string description) => 
+    public static Error Validation(string code, string description) =>
         new(code, description, ErrorType.Validation);
 
     /// <summary>
     /// Cria um erro de recurso não encontrado (HTTP 404).
     /// Use quando uma busca por ID ou chave não retorna resultados.
     /// </summary>
-    public static Error NotFound(string code, string description) => 
+    public static Error NotFound(string code, string description) =>
         new(code, description, ErrorType.NotFound);
 
     /// <summary>
     /// Cria um erro de conflito (HTTP 409).
     /// Use para violações de regras de negócio (ex: item duplicado, saldo insuficiente).
     /// </summary>
-    public static Error Conflict(string code, string description) => 
+    public static Error Conflict(string code, string description) =>
         new(code, description, ErrorType.Conflict);
 
     /// <summary>

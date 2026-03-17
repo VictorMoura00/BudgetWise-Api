@@ -1,4 +1,4 @@
-using BudgetWise.Infrastructure.Identity;
+using BudgetWise.Application.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

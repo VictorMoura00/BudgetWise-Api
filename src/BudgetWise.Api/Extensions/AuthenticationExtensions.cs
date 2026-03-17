@@ -1,8 +1,8 @@
-﻿using System.Text;
-using BudgetWise.Application.Interfaces;
+﻿using BudgetWise.Application.Interfaces;
 using BudgetWise.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace BudgetWise.Api.Extensions;
 

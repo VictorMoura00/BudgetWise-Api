@@ -1,4 +1,4 @@
-using BudgetWise.Infrastructure.Identity;
+using BudgetWise.Application.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

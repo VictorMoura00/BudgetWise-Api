@@ -1,5 +1,3 @@
-using System;
-
 namespace BudgetWise.Domain.Common.Results;
 
 /// <summary>
@@ -14,8 +12,8 @@ public class Result<T> : Result
     /// Obtém o valor do resultado se a operação foi bem-sucedida.
     /// </summary>
     /// <exception cref="InvalidOperationException">Lançada ao tentar acessar o valor de um resultado de falha.</exception>
-    public T Value => IsSuccess 
-        ? _value! 
+    public T Value => IsSuccess
+        ? _value!
         : throw new InvalidOperationException("Não é possível acessar o valor de um resultado de falha.");
 
     protected internal Result(T? value, bool isSuccess, Error error)
@@ -40,7 +38,7 @@ public class Result<T> : Result
     /// Converte implicitamente um valor do tipo <typeparamref name="T"/> em um <see cref="Result{T}"/> de sucesso.
     /// </summary>
     /// <param name="value">O valor a ser convertido.</param>
-    public static implicit operator Result<T>(T? value) => 
+    public static implicit operator Result<T>(T? value) =>
         value is not null ? Success(value) : Failure(Error.NullValue);
 
     /// <summary>
@@ -48,7 +46,7 @@ public class Result<T> : Result
     /// </summary>
     /// <param name="error">O erro a ser convertido.</param>
     public static implicit operator Result<T>(Error error) => Failure(error);
-    
+
     /// <summary>
     /// Executa uma função baseada no estado do resultado (Sucesso ou Falha).
     /// Útil para eliminar verificação explícita de propriedades e if/else.

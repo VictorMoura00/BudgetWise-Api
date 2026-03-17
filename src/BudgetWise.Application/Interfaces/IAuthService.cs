@@ -1,5 +1,4 @@
-﻿using BudgetWise.Application.Auth.Common;
-using BudgetWise.Domain.Common.Results;
+﻿using BudgetWise.Domain.Common.Results;
 
 namespace BudgetWise.Application.Interfaces;
 

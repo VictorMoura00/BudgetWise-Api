@@ -1,5 +1,5 @@
-﻿using BudgetWise.Domain.Interfaces;
-using BudgetWise.Infrastructure.Identity;
+﻿using BudgetWise.Application.Identity;
+using BudgetWise.Domain.Interfaces;
 using BudgetWise.Infrastructure.Persistence;
 using BudgetWise.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
