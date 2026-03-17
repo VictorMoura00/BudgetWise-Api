@@ -1,6 +1,6 @@
 ﻿using Serilog;
 using Serilog.Formatting.Json;
-using Serilog.Enrichers.Environment;
+
 namespace BudgetWise.Api.Extensions;
 
 public static class SerilogExtensions
