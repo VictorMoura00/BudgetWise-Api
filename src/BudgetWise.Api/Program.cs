@@ -1,3 +1,4 @@
+using BudgetWise.Api.Endpoints;
 using BudgetWise.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,10 @@ builder.Services.AddRepositories();
 
 // ── Autenticação e Autorização ─────────────────────────────────────────────
 builder.Services.AddApiAuthentication(builder.Configuration);
+
+// ── Application ────────────────────────────────────────────────────────────
+builder.Services.AddApplicationServices();
+builder.Services.AddUseCases();
 
 // ── API ────────────────────────────────────────────────────────────────────
 builder.Services.AddCorsPolicy(builder.Environment);
@@ -29,6 +34,9 @@ app.UseAuthorization();
 app.UseDocumentation();
 app.UseHealthMonitoring();
 app.UseStartupLog();
+
+// ── Endpoints ──────────────────────────────────────────────────────────────
+app.MapAuthEndpoints();
 
 app.Run();
 
