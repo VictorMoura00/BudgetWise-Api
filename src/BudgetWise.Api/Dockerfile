@@ -1,29 +1,23 @@
-# Acesse https://aka.ms/customizecontainer para saber como personalizar seu contêiner de depuração e como o Visual Studio usa este Dockerfile para criar suas imagens para uma depuração mais rápida.
-
-# Esta fase é usada durante a execução no VS no modo rápido (Padrão para a configuração de Depuração)
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-USER $APP_UID
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS base
 WORKDIR /app
 EXPOSE 8080
 
-
-# Esta fase é usada para compilar o projeto de serviço
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-ARG BUILD_CONFIGURATION=Release
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /src
-COPY ["BudgetWise.csproj", "."]
-RUN dotnet restore "./BudgetWise.csproj"
-COPY . .
-WORKDIR "/src/."
-RUN dotnet build "./BudgetWise.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Esta fase é usada para publicar o projeto de serviço a ser copiado para a fase final
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./BudgetWise.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Copia os .csproj e restaura dependências (cache de layers)
+COPY src/BudgetWise.Api/BudgetWise.Api.csproj src/BudgetWise.Api/
+COPY src/BudgetWise.Application/BudgetWise.Application.csproj src/BudgetWise.Application/
+COPY src/BudgetWise.Domain/BudgetWise.Domain.csproj src/BudgetWise.Domain/
+COPY src/BudgetWise.Infrastructure/BudgetWise.Infrastructure.csproj src/BudgetWise.Infrastructure/
+RUN dotnet restore src/BudgetWise.Api/BudgetWise.Api.csproj
 
-# Esta fase é usada na produção ou quando executada no VS no modo normal (padrão quando não está usando a configuração de Depuração)
+# Copia o restante e faz o build
+COPY src/ src/
+WORKDIR /src/src/BudgetWise.Api
+RUN dotnet publish -c Release -o /app/publish --no-restore
+
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "BudgetWise.dll"]
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "BudgetWise.Api.dll"]

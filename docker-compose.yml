@@ -1,0 +1,86 @@
+services:
+
+  # ── API ──────────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: src/BudgetWise.Api/Dockerfile
+    container_name: budgetwise-api
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=budgetwise;Username=budgetwise;Password=${POSTGRES_PASSWORD:-budgetwise_dev}
+      - Jwt__Secret=${JWT_SECRET:-superSecretKeyForDev_MustBeAtLeast32Chars!}
+      - Jwt__Issuer=budgetwise-api
+      - Jwt__Audience=budgetwise-client
+      - Jwt__AccessTokenExpirationMinutes=15
+      - Jwt__RefreshTokenExpirationDays=7
+      - Seq__ServerUrl=http://seq:5341
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - budgetwise-network
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: budgetwise-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=budgetwise
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-budgetwise_dev}
+      - POSTGRES_DB=budgetwise
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U budgetwise -d budgetwise"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - budgetwise-network
+
+  # ── pgAdmin ──────────────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: budgetwise-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@budgetwise.dev}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - budgetwise-network
+
+  # ── Seq (logs) ───────────────────────────────────────────────────────────────
+  seq:
+    image: datalust/seq:latest
+    container_name: budgetwise-seq
+    ports:
+      - "8081:80"
+      - "5341:5341"
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - seq-data:/data
+    networks:
+      - budgetwise-network
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+  seq-data:
+
+networks:
+  budgetwise-network:
+    driver: bridge
