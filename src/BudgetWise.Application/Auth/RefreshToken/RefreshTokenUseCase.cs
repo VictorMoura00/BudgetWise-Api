@@ -8,7 +8,7 @@ namespace BudgetWise.Application.Auth.RefreshToken;
 public sealed class RefreshTokenUseCase(
     IAuthService authService,
     ITokenService tokenService,
-    IConfiguration configuration)
+    IConfiguration configuration) : IUseCase
 {
     public async Task<Result<AuthResponse>> ExecuteAsync(
         RefreshTokenRequest request,

@@ -10,7 +10,7 @@ namespace BudgetWise.Application.Auth.Register;
 public sealed class RegisterUserUseCase(
     UserManager<ApplicationUser> userManager,
     ITokenService tokenService,
-    IConfiguration configuration)
+    IConfiguration configuration) : IUseCase
 {
     public async Task<Result<AuthResponse>> ExecuteAsync(
         RegisterUserRequest request,
