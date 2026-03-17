@@ -380,3 +380,4 @@ seq_data/
 *.p12
 dev-certs/
 
+src/BudgetWise.Api/appsettings.Development.json
