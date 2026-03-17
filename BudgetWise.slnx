@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/infra/">
+    <File Path=".env" />
+    <File Path=".env.example" />
+    <File Path="docker-compose.yml" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/BudgetWise.Application/BudgetWise.Application.csproj" />
     <Project Path="src/BudgetWise.Domain/BudgetWise.Domain.csproj" />

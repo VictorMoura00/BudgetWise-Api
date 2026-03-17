@@ -1,4 +1,5 @@
 using BudgetWise.Application.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,6 +9,8 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
+        builder.ToTable("asp_net_users");
+
         // ----- Custom business columns -----
 
         builder.Property(u => u.FullName)
@@ -50,4 +53,32 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Ignore(u => u.LockoutEnd);
         builder.Ignore(u => u.AccessFailedCount);
     }
+}
+
+
+public class IdentityTablesConfiguration :
+    IEntityTypeConfiguration<IdentityRole<Guid>>,
+    IEntityTypeConfiguration<IdentityUserRole<Guid>>,
+    IEntityTypeConfiguration<IdentityUserClaim<Guid>>,
+    IEntityTypeConfiguration<IdentityUserLogin<Guid>>,
+    IEntityTypeConfiguration<IdentityUserToken<Guid>>,
+    IEntityTypeConfiguration<IdentityRoleClaim<Guid>>
+{
+    public void Configure(EntityTypeBuilder<IdentityRole<Guid>> builder)
+        => builder.ToTable("asp_net_roles");
+
+    public void Configure(EntityTypeBuilder<IdentityUserRole<Guid>> builder)
+        => builder.ToTable("asp_net_user_roles");
+
+    public void Configure(EntityTypeBuilder<IdentityUserClaim<Guid>> builder)
+        => builder.ToTable("asp_net_user_claims");
+
+    public void Configure(EntityTypeBuilder<IdentityUserLogin<Guid>> builder)
+        => builder.ToTable("asp_net_user_logins");
+
+    public void Configure(EntityTypeBuilder<IdentityUserToken<Guid>> builder)
+        => builder.ToTable("asp_net_user_tokens");
+
+    public void Configure(EntityTypeBuilder<IdentityRoleClaim<Guid>> builder)
+        => builder.ToTable("asp_net_role_claims");
 }
