@@ -10,7 +10,7 @@ namespace BudgetWise.Application.Auth.Login;
 public sealed class LoginUserUseCase(
     UserManager<ApplicationUser> userManager,
     ITokenService tokenService,
-    IConfiguration configuration)
+    IConfiguration configuration) : IUseCase
 {
     public async Task<Result<AuthResponse>> ExecuteAsync(
         LoginUserRequest request,
