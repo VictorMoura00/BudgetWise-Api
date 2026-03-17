@@ -1,3 +1,4 @@
+using BudgetWise.Domain.Common.Abstractions;
 using BudgetWise.Domain.Common.Pagination;
 
 namespace BudgetWise.Domain.Common.Interfaces;

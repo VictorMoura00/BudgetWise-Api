@@ -45,14 +45,14 @@ public sealed class LoginUserUseCase(
         await userManager.SetAuthenticationTokenAsync(
             user,
             loginProvider: "BudgetWise",
-            name: "RefreshToken",
-            value: refreshToken);
+            tokenName: "RefreshToken",
+            tokenValue: refreshToken);
 
         await userManager.SetAuthenticationTokenAsync(
             user,
             loginProvider: "BudgetWise",
-            name: "RefreshTokenExpiration",
-            value: DateTime.UtcNow.AddDays(refreshTokenExpDays).ToString("O"));
+            tokenName: "RefreshTokenExpiration",
+            tokenValue: DateTime.UtcNow.AddDays(refreshTokenExpDays).ToString("O"));
 
         return new AuthResponse(
             UserId: user.Id,

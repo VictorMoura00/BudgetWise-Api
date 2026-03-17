@@ -1,6 +1,6 @@
-﻿namespace BudgetWise.Application.Auth.RefreshToken
-{
-    internal class RefreshTokenRequest
-    {
-    }
-}
+﻿namespace BudgetWise.Application.Auth.RefreshToken;
+
+public sealed record RefreshTokenRequest(
+    Guid UserId,
+    string RefreshToken
+);

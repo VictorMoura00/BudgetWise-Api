@@ -1,5 +1,4 @@
 ﻿using BudgetWise.Domain.Common.Results;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BudgetWise.Application.Auth.Common;
 

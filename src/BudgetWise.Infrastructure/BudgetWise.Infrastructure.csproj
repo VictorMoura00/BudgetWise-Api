@@ -1,6 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <Compile Remove="Persistence\Migrations\Initialcreate.designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Persistence\Migrations\20260317103000_Initialcreate.designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BudgetWise.Application\BudgetWise.Application.csproj" />
     <ProjectReference Include="..\BudgetWise.Domain\BudgetWise.Domain.csproj" />
   </ItemGroup>
