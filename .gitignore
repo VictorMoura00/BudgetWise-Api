@@ -362,4 +362,21 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-.idea
+# BudgetWise — arquivos locais com segredos
+.env
+.env.local
+**/appsettings.Local.json
+**/appsettings.*.local.json
+
+# Rider / JetBrains
+.idea/
+
+# Docker volumes locais
+postgres_data/
+seq_data/
+
+# Certificados de desenvolvimento
+*.pfx
+*.p12
+dev-certs/
+
