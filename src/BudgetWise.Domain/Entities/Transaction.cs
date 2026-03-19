@@ -18,14 +18,12 @@ public class Transaction : Entity, ISoftDeletable
     public bool IsConfirmed { get; private set; }
     public PaymentMethod? PaymentMethod { get; private set; }
     public DateTime? DeletedAt { get; private set; }
-
-    // Navegação
     public Category? Category { get; private init; }
     public FamilyGroup? FamilyGroup { get; private init; }
     public ICollection<TransactionTag> TransactionTags { get; private init; } = [];
     public ICollection<SharedExpense> SharedExpenses { get; private init; } = [];
 
-    private Transaction() { } // EF Core
+    private Transaction() { }
 
     public static Transaction Create(
         Guid userId,
@@ -71,7 +69,7 @@ public class Transaction : Entity, ISoftDeletable
         Guid? familyGroupId)
     {
         if (IsDeleted)
-            throw new InvalidOperationException("Não é possível editar uma transação excluída.");
+            throw new InvalidOperationException("It is not possible to edit a deleted transaction.");
 
         Description = description;
         Amount = amount;
@@ -89,7 +87,7 @@ public class Transaction : Entity, ISoftDeletable
     public void Confirm()
     {
         if (IsDeleted)
-            throw new InvalidOperationException("Não é possível confirmar uma transação excluída.");
+            throw new InvalidOperationException("It is not possible to confirm a deleted transaction.");
 
         IsConfirmed = true;
         SetUpdated();

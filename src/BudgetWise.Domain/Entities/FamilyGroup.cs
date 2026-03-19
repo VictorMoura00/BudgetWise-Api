@@ -8,13 +8,11 @@ public class FamilyGroup : Entity
     public string? Description { get; private set; }
     public string InviteCode { get; private set; } = string.Empty;
     public Guid CreatedBy { get; private init; }
-
-    // Navegação
     public ICollection<FamilyMember> Members { get; private init; } = [];
     public ICollection<Transaction> Transactions { get; private init; } = [];
     public ICollection<SharedExpense> SharedExpenses { get; private init; } = [];
 
-    private FamilyGroup() { } // EF Core
+    private FamilyGroup() { } 
 
     public static FamilyGroup Create(Guid createdBy, string name, string? description = null)
     {

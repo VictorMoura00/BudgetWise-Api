@@ -6,11 +6,9 @@ public class Tag : Entity
 {
     public Guid UserId { get; private init; }
     public string Name { get; private set; } = string.Empty;
-
-    // Navegação
     public ICollection<TransactionTag> TransactionTags { get; private init; } = [];
 
-    private Tag() { } // EF Core
+    private Tag() { } 
 
     public static Tag Create(Guid userId, string name)
     {

@@ -9,11 +9,9 @@ public class FamilyMember : Entity
     public Guid UserId { get; private init; }
     public FamilyMemberRole Role { get; private set; }
     public DateTime JoinedAt { get; private init; } = DateTime.UtcNow;
-
-    // Navegação
     public FamilyGroup FamilyGroup { get; private init; } = null!;
 
-    private FamilyMember() { } // EF Core
+    private FamilyMember() { }
 
     public static FamilyMember CreateOwner(Guid familyGroupId, Guid userId)
     {
