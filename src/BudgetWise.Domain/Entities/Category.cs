@@ -1,4 +1,5 @@
 ﻿using BudgetWise.Domain.Common.Abstractions;
+using BudgetWise.Domain.ValueObjects;
 using System.Transactions;
 
 namespace BudgetWise.Domain.Entities;
@@ -8,7 +9,7 @@ public class Category : Entity
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public string? Icon { get; private set; }
-    public string? Color { get; private set; }
+    public HexColor? Color { get; private set; }
     public bool IsSystem { get; private init; }
     public bool IsActive { get; private set; } = true;
     public Guid? UserId { get; private init; }
