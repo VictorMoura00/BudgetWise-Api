@@ -38,6 +38,9 @@ app.UseStartupLog();
 // ── Endpoints ──────────────────────────────────────────────────────────────
 app.MapAuthEndpoints();
 
+// ── Inicialização do banco ──────────────────────────────────────────────────
+await app.InitialiseDatabaseAsync();
+
 app.Run();
 
 public partial class Program { }
