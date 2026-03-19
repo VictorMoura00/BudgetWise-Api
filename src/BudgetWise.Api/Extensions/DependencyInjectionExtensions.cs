@@ -1,23 +1,34 @@
-﻿using BudgetWise.Application.Identity;
+﻿using BudgetWise.Application.Auth.Register;
+using BudgetWise.Application.Identity;
 using BudgetWise.Domain.Interfaces;
 using BudgetWise.Infrastructure.Persistence;
 using BudgetWise.Infrastructure.Repositories;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace BudgetWise.Api.Extensions;
 
 public static class DependencyInjectionExtensions
 {
-    public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddDatabase(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IWebHostEnvironment environment)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException("Connection string 'Default' not found.");
+        var connectionString = configuration.GetConnectionString("Default");
+
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            if (!environment.IsEnvironment("Test"))
+                throw new InvalidOperationException("Connection string 'Default' not found.");
+            return services;
+        }
 
         services.AddDbContext<AppDbContext>(options =>
         {
             options
                 .UseNpgsql(connectionString)
-                .UseSnakeCaseNamingConvention(); // Mapeia PascalCase C# para snake_case no PostgreSQL
+                .UseSnakeCaseNamingConvention();
         });
 
         return services;
@@ -54,6 +65,12 @@ public static class DependencyInjectionExtensions
             })
             .AddEntityFrameworkStores<AppDbContext>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddValidators(this IServiceCollection services)
+    {
+        services.AddValidatorsFromAssemblyContaining<RegisterUserValidator>();
         return services;
     }
 }

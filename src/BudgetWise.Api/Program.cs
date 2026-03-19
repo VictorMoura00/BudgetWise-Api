@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilogConfiguration();
 
 // ── Infraestrutura ─────────────────────────────────────────────────────────
-builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddDatabase(builder.Configuration, builder.Environment);
 builder.Services.AddIdentityServices();
 builder.Services.AddRepositories();
 
@@ -17,6 +17,7 @@ builder.Services.AddApiAuthentication(builder.Configuration);
 // ── Application ────────────────────────────────────────────────────────────
 builder.Services.AddApplicationServices();
 builder.Services.AddUseCases();
+builder.Services.AddValidators();
 
 // ── API ────────────────────────────────────────────────────────────────────
 builder.Services.AddCorsPolicy(builder.Environment);
@@ -43,4 +44,3 @@ await app.InitialiseDatabaseAsync();
 
 app.Run();
 
-public partial class Program { }
