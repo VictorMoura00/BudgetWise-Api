@@ -1,14 +1,12 @@
 ﻿using BudgetWise.Application.Auth.Common;
-using BudgetWise.Application.Identity;
 using BudgetWise.Application.Interfaces;
 using BudgetWise.Domain.Common.Results;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 
 namespace BudgetWise.Application.Auth.Login;
 
 public sealed class LoginUserUseCase(
-    UserManager<ApplicationUser> userManager,
+    IAuthService authService,
     ITokenService tokenService,
     IConfiguration configuration) : IUseCase
 {
@@ -16,47 +14,25 @@ public sealed class LoginUserUseCase(
         LoginUserRequest request,
         CancellationToken cancellationToken = default)
     {
-        var user = await userManager.FindByEmailAsync(request.Email);
-        if (user is null)
-            return AuthErrors.InvalidCredentials;
+        var credentialsResult = await authService.ValidateCredentialsAsync(
+            request.Email,
+            request.Password,
+            cancellationToken);
 
-        if (!user.IsActive)
-            return AuthErrors.AccountDisabled;
+        if (credentialsResult.IsFailure)
+            return credentialsResult.Error;
 
-        if (await userManager.IsLockedOutAsync(user))
-            return AuthErrors.AccountLockedOut;
+        var user = credentialsResult.Value;
 
-        var passwordValid = await userManager.CheckPasswordAsync(user, request.Password);
-        if (!passwordValid)
-        {
-            await userManager.AccessFailedAsync(user);
-            return AuthErrors.InvalidCredentials;
-        }
-
-        // Reset do contador de tentativas após login bem-sucedido
-        await userManager.ResetAccessFailedCountAsync(user);
-
-        var accessToken = tokenService.GenerateAccessToken(user.Id, user.Email!, user.FullName);
+        var accessToken = tokenService.GenerateAccessToken(user.Id, user.Email, user.FullName);
         var refreshToken = tokenService.GenerateRefreshToken();
+        var expDays = int.Parse(configuration["Jwt:RefreshTokenExpirationDays"] ?? "7");
 
-        var refreshTokenExpDays = int.Parse(configuration["Jwt:RefreshTokenExpirationDays"] ?? "7");
-
-        // Rotação obrigatória: substitui o refresh token anterior
-        await userManager.SetAuthenticationTokenAsync(
-            user,
-            loginProvider: "BudgetWise",
-            tokenName: "RefreshToken",
-            tokenValue: refreshToken);
-
-        await userManager.SetAuthenticationTokenAsync(
-            user,
-            loginProvider: "BudgetWise",
-            tokenName: "RefreshTokenExpiration",
-            tokenValue: DateTime.UtcNow.AddDays(refreshTokenExpDays).ToString("O"));
+        await authService.StoreRefreshTokenAsync(user.Id, refreshToken, expDays, cancellationToken);
 
         return new AuthResponse(
             UserId: user.Id,
-            Email: user.Email!,
+            Email: user.Email,
             FullName: user.FullName,
             AccessToken: accessToken,
             RefreshToken: refreshToken);
