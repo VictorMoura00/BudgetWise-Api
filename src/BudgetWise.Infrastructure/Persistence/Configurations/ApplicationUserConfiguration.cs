@@ -49,9 +49,6 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Ignore(u => u.PhoneNumber);
         builder.Ignore(u => u.PhoneNumberConfirmed);
         builder.Ignore(u => u.TwoFactorEnabled);
-        builder.Ignore(u => u.LockoutEnabled);
-        builder.Ignore(u => u.LockoutEnd);
-        builder.Ignore(u => u.AccessFailedCount);
     }
 }
 
