@@ -30,7 +30,7 @@ public class Category : Entity
         };
     }
 
-    public static Category CreatePersonal(Guid userId, string name, string? description = null, string? icon = null, string? color = null)
+    public static Category CreatePersonal(Guid userId, string name, string? description = null, string? icon = null, HexColor? color = null)
     {
         return new Category
         {
@@ -43,7 +43,7 @@ public class Category : Entity
         };
     }
 
-    public void Update(string name, string? description, string? icon, string? color)
+    public void Update(string name, string? description, string? icon, HexColor? color)
     {
         Name = name;
         Description = description;
