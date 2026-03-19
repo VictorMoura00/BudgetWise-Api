@@ -1,22 +1,16 @@
 namespace BudgetWise.Domain.Common.Abstractions;
 
+/// <summary>
+/// Classe base para todas as entidades do domínio.
+/// Igualdade por identidade (Id), não por valor.
+/// </summary>
 public abstract class Entity : IEquatable<Entity>
 {
-    public Guid Id { get; protected set; } = Guid.NewGuid();
-    public DateTimeOffset CreatedAt { get; protected set; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset? UpdatedAt { get; protected set; }
-    public bool IsDeleted { get; protected set; } = false;
+    public Guid Id { get; protected init; } = Guid.NewGuid();
+    public DateTime CreatedAt { get; protected init; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; protected set; } = DateTime.UtcNow;
 
-    protected void SetUpdated()
-    {
-        UpdatedAt = DateTimeOffset.UtcNow;
-    }
-
-    public void Delete()
-    {
-        IsDeleted = true;
-        SetUpdated();
-    }
+    protected void SetUpdated() => UpdatedAt = DateTime.UtcNow;
 
     public bool Equals(Entity? other)
     {
@@ -26,6 +20,5 @@ public abstract class Entity : IEquatable<Entity>
     }
 
     public override bool Equals(object? obj) => Equals(obj as Entity);
-
     public override int GetHashCode() => Id.GetHashCode();
 }
