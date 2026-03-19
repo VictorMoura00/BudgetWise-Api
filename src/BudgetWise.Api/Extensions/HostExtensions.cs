@@ -1,10 +1,26 @@
-﻿using Microsoft.AspNetCore.Hosting.Server;
+﻿using BudgetWise.Infrastructure.Persistence;
+using BudgetWise.Infrastructure.Seeds;
+using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.EntityFrameworkCore;
 
 namespace BudgetWise.Api.Extensions;
 
 public static class HostExtensions
 {
+    public static async Task InitialiseDatabaseAsync(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
+
+        logger.LogInformation("Applying pending migrations...");
+        await context.Database.MigrateAsync();
+
+        await CategorySeeder.SeedAsync(context, logger);
+    }
+
     public static WebApplication UseStartupLog(this WebApplication app)
     {
         app.Lifetime.ApplicationStarted.Register(() =>
