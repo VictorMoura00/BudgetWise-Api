@@ -23,7 +23,7 @@ public static class AuthErrors
         Error.Unauthorized("Auth.InvalidRefreshToken", "Refresh token inválido ou expirado.");
 
     public static Error UserNotFound =>
-        Error.NotFound("Auth.UserNotFound", "Usuário não encontrado.");
+        Error.Unauthorized("Auth.UserNotFound", "Refresh token inválido ou expirado.");
 
     public static Error RegistrationFailed(string details) =>
         Error.Validation("Auth.RegistrationFailed", details);
