@@ -7,18 +7,19 @@ public static class HealthCheckExtensions
 {
     public static IServiceCollection AddHealthMonitoring(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException("Connection string 'Default' not found.");
+        var connectionString = configuration.GetConnectionString("Default");
 
-        services
-            .AddHealthChecks()
-            .AddNpgSql(
+        var builder = services.AddHealthChecks();
+
+        if (!string.IsNullOrEmpty(connectionString))
+        {
+            builder.AddNpgSql(
                 connectionString,
                 name: "postgres",
                 failureStatus: HealthStatus.Unhealthy,
                 timeout: TimeSpan.FromSeconds(3),
-                tags: ["database", "ready"]
-            );
+                tags: ["database", "ready"]);
+        }
 
         return services;
     }

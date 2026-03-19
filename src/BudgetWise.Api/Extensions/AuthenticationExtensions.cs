@@ -10,29 +10,33 @@ public static class AuthenticationExtensions
 {
     public static IServiceCollection AddApiAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        var jwtSecret = configuration["Jwt:Secret"]
-            ?? throw new InvalidOperationException("JWT Secret not configured.");
+        var jwtSecret = configuration["Jwt:Secret"] ?? string.Empty;
 
         services
-            .AddAuthentication(options =>
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        var keyBytes = Encoding.UTF8.GetBytes(jwtSecret);
+
+        if (keyBytes.Length > 0)
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = configuration["Jwt:Issuer"],
-                    ValidAudience = configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-                    ClockSkew = TimeSpan.Zero // Remove a tolerância padrão de 5 min na expiração
-                };
-            });
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = configuration["Jwt:Issuer"],
+                ValidAudience = configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
+                ClockSkew = TimeSpan.Zero
+            };
+        }
+    });
 
         services.AddAuthorization();
         services.AddHttpContextAccessor();
