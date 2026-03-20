@@ -2,7 +2,7 @@
 
 namespace BudgetWise.Domain.Entities;
 
-public class Tag : Entity
+public class Tag : Entity, IAggregateRoot
 {
     public Guid UserId { get; private init; }
     public string Name { get; private set; } = string.Empty;

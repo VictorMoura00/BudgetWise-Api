@@ -1,4 +1,5 @@
 using BudgetWise.Domain.Common.Abstractions;
+using BudgetWise.Domain.Exceptions;
 
 namespace BudgetWise.Domain.Entities;
 
@@ -26,7 +27,7 @@ public class SharedExpenseParticipant : Entity
     public void Settle()
     {
         if (IsSettled)
-            throw new InvalidOperationException("This expense has already been paid off.");
+            throw new DomainException("This expense has already been paid off.");
 
         IsSettled = true;
         SettledAt = DateTime.UtcNow;

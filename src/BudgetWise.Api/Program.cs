@@ -37,7 +37,7 @@ app.UseHealthMonitoring();
 app.UseStartupLog();
 
 // ── Endpoints ──────────────────────────────────────────────────────────────
-app.MapAuthEndpoints();
+app.MapAllEndpoints();
 
 // ── Inicialização do banco ──────────────────────────────────────────────────
 await app.InitialiseDatabaseAsync();

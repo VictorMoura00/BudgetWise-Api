@@ -1,9 +1,10 @@
 ﻿using BudgetWise.Domain.Common.Abstractions;
 using BudgetWise.Domain.Enums;
+using BudgetWise.Domain.Exceptions;
 
 namespace BudgetWise.Domain.Entities;
 
-public class Transaction : Entity, ISoftDeletable
+public class Transaction : Entity, ISoftDeletable, IAggregateRoot
 {
     public Guid UserId { get; private init; }
     public Guid? FamilyGroupId { get; private set; }
@@ -69,7 +70,7 @@ public class Transaction : Entity, ISoftDeletable
         Guid? familyGroupId)
     {
         if (IsDeleted)
-            throw new InvalidOperationException("It is not possible to edit a deleted transaction.");
+            throw new DomainException("It is not possible to edit a deleted transaction.");
 
         Description = description;
         Amount = amount;
@@ -87,7 +88,7 @@ public class Transaction : Entity, ISoftDeletable
     public void Confirm()
     {
         if (IsDeleted)
-            throw new InvalidOperationException("It is not possible to confirm a deleted transaction.");
+            throw new DomainException("It is not possible to confirm a deleted transaction.");
 
         IsConfirmed = true;
         SetUpdated();

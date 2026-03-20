@@ -4,7 +4,7 @@ using System.Transactions;
 
 namespace BudgetWise.Domain.Entities;
 
-public class Category : Entity
+public class Category : Entity, IAggregateRoot
 {
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }

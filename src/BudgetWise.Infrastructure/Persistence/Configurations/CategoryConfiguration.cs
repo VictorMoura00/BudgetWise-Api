@@ -29,9 +29,13 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 
         builder.Property(c => c.Color)
             .HasMaxLength(7)
-            .HasConversion(
+                .HasConversion(
                 color => color == null ? null : color.Value,
-                value => HexColor.Create(value));
+                value => string.IsNullOrEmpty(value)
+                    ? null
+                    : HexColor.Create(value).IsSuccess
+                        ? HexColor.Create(value).Value
+                        : null);
 
         builder.Property(c => c.IsSystem)
             .HasDefaultValue(false)

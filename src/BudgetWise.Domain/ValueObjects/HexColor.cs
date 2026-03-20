@@ -1,5 +1,6 @@
-using System.Text.RegularExpressions;
 using BudgetWise.Domain.Common.Abstractions;
+using BudgetWise.Domain.Common.Results;
+using System.Text.RegularExpressions;
 
 namespace BudgetWise.Domain.ValueObjects;
 
@@ -11,15 +12,15 @@ public partial class HexColor : ValueObject
 
     private HexColor(string value) => Value = value;
 
-    public static HexColor? Create(string? color)
+    public static Result<HexColor> Create(string? color)
     {
         if (string.IsNullOrWhiteSpace(color))
-            return null;
+            return Error.Validation("HexColor.Invalid", "Color cannot be empty.");
 
         var normalized = color.Trim().ToUpperInvariant();
 
         if (!HexPattern.IsMatch(normalized))
-            throw new ArgumentException($"'{color}' não é uma cor hexadecimal válida. Use o formato #RRGGBB.");
+            return Error.Validation("HexColor.Invalid", $"'{color}' is not a valid hex color. Use the format #RRGGBB.");
 
         return new HexColor(normalized);
     }

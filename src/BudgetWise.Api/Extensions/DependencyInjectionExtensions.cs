@@ -1,8 +1,10 @@
 ﻿using BudgetWise.Application.Auth.Register;
 using BudgetWise.Application.Identity;
+using BudgetWise.Domain.Common.Interfaces;
 using BudgetWise.Domain.Interfaces;
 using BudgetWise.Infrastructure.Persistence;
 using BudgetWise.Infrastructure.Repositories;
+using BudgetWise.Infrastructure.Repositories.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,11 +38,23 @@ public static class DependencyInjectionExtensions
 
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
-        services.AddScoped<ITransactionRepository, TransactionRepository>();
-        services.AddScoped<ICategoryRepository, CategoryRepository>();
-        services.AddScoped<ITagRepository, TagRepository>();
-        services.AddScoped<IFamilyGroupRepository, FamilyGroupRepository>();
-        services.AddScoped<ISharedExpenseRepository, SharedExpenseRepository>();
+        // UnitOfWork
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Scan automático: qualquer classe que termina com "Repository"
+        var repositoryTypes = typeof(CategoryRepository).Assembly
+            .GetTypes()
+            .Where(t => t is { IsAbstract: false, IsInterface: false }
+                        && t.Name.EndsWith("Repository"));
+
+        foreach (var type in repositoryTypes)
+        {
+            var interfaceType = type.GetInterfaces()
+                .FirstOrDefault(i => i.Name == $"I{type.Name}");
+
+            if (interfaceType is not null)
+                services.AddScoped(interfaceType, type);
+        }
 
         return services;
     }

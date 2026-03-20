@@ -2,7 +2,7 @@ using BudgetWise.Domain.Common.Abstractions;
 
 namespace BudgetWise.Domain.Entities;
 
-public class FamilyGroup : Entity
+public class FamilyGroup : Entity, IAggregateRoot
 {
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }

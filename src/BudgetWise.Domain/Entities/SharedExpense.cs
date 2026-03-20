@@ -2,7 +2,7 @@ using BudgetWise.Domain.Common.Abstractions;
 
 namespace BudgetWise.Domain.Entities;
 
-public class SharedExpense : Entity
+public class SharedExpense : Entity, IAggregateRoot
 {
     public Guid TransactionId { get; private init; }
     public Guid FamilyGroupId { get; private init; }

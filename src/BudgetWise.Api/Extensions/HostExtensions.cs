@@ -1,8 +1,10 @@
-﻿using BudgetWise.Infrastructure.Persistence;
+﻿using BudgetWise.Api.Endpoints;
+using BudgetWise.Infrastructure.Persistence;
 using BudgetWise.Infrastructure.Seeds;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace BudgetWise.Api.Extensions;
 
@@ -51,6 +53,23 @@ public static class HostExtensions
 
             logger.LogInformation("-------------------------------------------------");
         });
+
+        return app;
+    }
+    public static WebApplication MapAllEndpoints(this WebApplication app)
+    {
+        var endpointMethods = typeof(AuthEndpoints).Assembly
+            .GetTypes()
+            .Where(t => t is { IsAbstract: false, IsInterface: false }
+                        && t.Name.EndsWith("Endpoints"))
+            .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
+            .Where(m => m.Name.StartsWith("Map")
+                        && m.Name != "MapAllEndpoints"
+                        && m.GetParameters().Length == 1
+                        && m.GetParameters()[0].ParameterType == typeof(WebApplication));
+
+        foreach (var method in endpointMethods)
+            method.Invoke(null, [app]);
 
         return app;
     }
