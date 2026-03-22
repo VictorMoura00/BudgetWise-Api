@@ -7,9 +7,9 @@ using BudgetWise.Api.Extensions;
 
 namespace BudgetWise.Api.Endpoints;
 
-public static class AuthEndpoints
+public class AuthEndpoints : IEndpointModule
 {
-    public static RouteGroupBuilder MapAuthEndpoints(this WebApplication app)
+    public void Map(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v1/auth")
             .WithTags("Auth")
@@ -67,6 +67,5 @@ public static class AuthEndpoints
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        return group;
     }
 }

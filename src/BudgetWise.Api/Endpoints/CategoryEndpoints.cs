@@ -7,9 +7,9 @@ using System.Security.Claims;
 
 namespace BudgetWise.Api.Endpoints;
 
-public static class CategoryEndpoints
+public class CategoryEndpoints : IEndpointModule
 {
-    public static RouteGroupBuilder MapCategoryEndpoints(this WebApplication app)
+    public void Map(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v1/categories")
             .WithTags("Categories")
@@ -103,6 +103,5 @@ public static class CategoryEndpoints
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        return group;
     }
 }
