@@ -32,12 +32,12 @@ app.UseGlobalErrorHandler();
 app.UseCorsPolicy();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseDocumentation();
 app.UseHealthMonitoring();
 app.UseStartupLog();
 
 // ── Endpoints ──────────────────────────────────────────────────────────────
 app.MapAllEndpoints();
+app.UseDocumentation();
 
 // ── Inicialização do banco ──────────────────────────────────────────────────
 await app.InitialiseDatabaseAsync();
