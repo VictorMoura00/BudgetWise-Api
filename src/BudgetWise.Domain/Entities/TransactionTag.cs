@@ -1,6 +1,8 @@
-﻿namespace BudgetWise.Domain.Entities;
+using BudgetWise.Domain.Common.Abstractions;
 
-public class TransactionTag
+namespace BudgetWise.Domain.Entities;
+
+public class TransactionTag : Entity
 {
     public Guid TransactionId { get; private init; }
     public Guid TagId { get; private init; }
