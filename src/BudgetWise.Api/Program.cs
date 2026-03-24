@@ -23,13 +23,16 @@ builder.Services.AddUseCases();
 builder.Services.AddValidators();
 
 // ── Mensageria (Domain Events) ──────────────────────────────────────────────
+// ExtensionDiscovery.ManualOnly disables Wolverine from scanning every DLL in
+// the bin folder looking for IWolverineExtension implementations.
+// DisableConventionalDiscovery() disables automatic handler scanning — we only
+// include the assemblies that actually contain handlers.
 builder.Host.UseWolverine(opts =>
 {
-    // Disable automatic assembly scanning — only scan what we explicitly include
     opts.Discovery.DisableConventionalDiscovery();
     opts.Discovery.IncludeAssembly(typeof(ApplicationAssemblyMarker).Assembly);
     opts.Discovery.IncludeAssembly(typeof(InfrastructureAssemblyMarker).Assembly);
-});
+}, ExtensionDiscovery.ManualOnly);
 
 // ── API ────────────────────────────────────────────────────────────────────
 builder.Services.AddCorsPolicy(builder.Environment);
