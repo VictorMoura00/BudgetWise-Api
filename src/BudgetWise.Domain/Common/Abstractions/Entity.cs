@@ -6,9 +6,26 @@ namespace BudgetWise.Domain.Common.Abstractions;
 /// </summary>
 public abstract class Entity : IEquatable<Entity>
 {
+    private readonly List<IDomainEvent> _domainEvents = [];
+
     public Guid Id { get; protected init; } = Guid.NewGuid();
     public DateTime CreatedAt { get; protected init; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; protected set; } = DateTime.UtcNow;
+
+    public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+
+    protected void Raise(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
+
+    /// <summary>
+    /// Returns all pending events and clears the internal collection.
+    /// Called by the infrastructure after SaveChangesAsync to dispatch via Wolverine.
+    /// </summary>
+    public IReadOnlyList<IDomainEvent> PopDomainEvents()
+    {
+        var events = _domainEvents.ToList().AsReadOnly();
+        _domainEvents.Clear();
+        return events;
+    }
 
     protected void SetUpdated() => UpdatedAt = DateTime.UtcNow;
 
