@@ -1,12 +1,15 @@
 using BudgetWise.Application.Identity;
 using BudgetWise.Domain.Entities;
+using BudgetWise.Infrastructure.Persistence.Interceptors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BudgetWise.Infrastructure.Persistence;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options)
+public class AppDbContext(
+    DbContextOptions<AppDbContext> options,
+    DomainEventDispatcherInterceptor domainEventInterceptor)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<Transaction> Transactions => Set<Transaction>();
@@ -18,6 +21,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<SharedExpense> SharedExpenses => Set<SharedExpense>();
     public DbSet<SharedExpenseParticipant> SharedExpenseParticipants => Set<SharedExpenseParticipant>();
 
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.AddInterceptors(domainEventInterceptor);
+    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
