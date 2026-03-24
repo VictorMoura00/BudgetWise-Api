@@ -1,9 +1,12 @@
 using BudgetWise.Domain.Entities;
 using BudgetWise.Infrastructure.Persistence;
+using BudgetWise.Infrastructure.Persistence.Interceptors;
 using BudgetWise.Infrastructure.Seeds;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
+using Wolverine;
 
 namespace BudgetWise.UnitTests.Infrastructure;
 
@@ -15,7 +18,9 @@ public sealed class CategorySeederTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new AppDbContext(options);
+        var interceptor = new DomainEventDispatcherInterceptor(Substitute.For<IMessageBus>());
+
+        return new AppDbContext(options, interceptor);
     }
 
     [Fact]
