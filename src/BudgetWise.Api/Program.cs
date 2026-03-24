@@ -1,5 +1,8 @@
 using BudgetWise.Api.Endpoints;
 using BudgetWise.Api.Extensions;
+using BudgetWise.Application;
+using BudgetWise.Infrastructure;
+using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +21,14 @@ builder.Services.AddApiAuthentication(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddUseCases();
 builder.Services.AddValidators();
+
+// ── Mensageria (Domain Events) ──────────────────────────────────────────────
+builder.Host.UseWolverine(opts =>
+{
+    // Auto-discover all handlers in Application and Infrastructure assemblies
+    opts.Discovery.IncludeAssembly(typeof(ApplicationAssemblyMarker).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(InfrastructureAssemblyMarker).Assembly);
+});
 
 // ── API ────────────────────────────────────────────────────────────────────
 builder.Services.AddCorsPolicy(builder.Environment);

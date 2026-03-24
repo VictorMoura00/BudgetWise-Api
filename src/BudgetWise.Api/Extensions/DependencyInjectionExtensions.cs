@@ -3,6 +3,7 @@ using BudgetWise.Application.Identity;
 using BudgetWise.Domain.Common.Interfaces;
 using BudgetWise.Domain.Interfaces;
 using BudgetWise.Infrastructure.Persistence;
+using BudgetWise.Infrastructure.Persistence.Interceptors;
 using BudgetWise.Infrastructure.Repositories;
 using BudgetWise.Infrastructure.Repositories.Common;
 using FluentValidation;
@@ -26,10 +27,15 @@ public static class DependencyInjectionExtensions
             return services;
         }
 
+        // The interceptor must be registered before AddDbContext so EF Core
+        // can resolve it from the container when AppDbContext is constructed.
+        services.AddScoped<DomainEventDispatcherInterceptor>();
+
         services.AddDbContext<AppDbContext>(options =>
         {
             options
-                .UseNpgsql(connectionString)
+                .UseNpgsql(connectionString, npgsql =>
+                    npgsql.EnableRetryOnFailure(maxRetryCount: 3))
                 .UseSnakeCaseNamingConvention();
         });
 
