@@ -25,7 +25,8 @@ builder.Services.AddValidators();
 // ── Mensageria (Domain Events) ──────────────────────────────────────────────
 builder.Host.UseWolverine(opts =>
 {
-    // Auto-discover all handlers in Application and Infrastructure assemblies
+    // Disable automatic assembly scanning — only scan what we explicitly include
+    opts.Discovery.DisableConventionalDiscovery();
     opts.Discovery.IncludeAssembly(typeof(ApplicationAssemblyMarker).Assembly);
     opts.Discovery.IncludeAssembly(typeof(InfrastructureAssemblyMarker).Assembly);
 });
