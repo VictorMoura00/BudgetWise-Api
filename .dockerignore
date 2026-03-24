@@ -1,0 +1,33 @@
+# ── Version control ──────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── IDE and editor artifacts ─────────────────────────────────────────────────
+.vs/
+.vscode/
+**/*.user
+**/*.suo
+**/.idea/
+
+# ── Build output (rebuilt inside Docker) ─────────────────────────────────────
+**/bin/
+**/obj/
+
+# ── Secrets / environment files ──────────────────────────────────────────────
+.env
+**/*.env.local
+**/secrets.dev.yaml
+**/values.dev.yaml
+
+# ── Docker meta-files ────────────────────────────────────────────────────────
+**/.dockerignore
+**/docker-compose*
+**/Dockerfile*
+
+# ── Integration tests — use Testcontainers, cannot run inside Docker without DinD ──
+tests/BudgetWise.IntegrationTests/
+
+# ── Documentation / project root files ───────────────────────────────────────
+docs/
+*.md
+LICENSE
