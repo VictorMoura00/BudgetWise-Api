@@ -1,5 +1,6 @@
 using BudgetWise.Domain.Common.Abstractions;
 using BudgetWise.Domain.Enums;
+using BudgetWise.Domain.Exceptions;
 
 namespace BudgetWise.Domain.Entities;
 
@@ -31,5 +32,21 @@ public class FamilyMember : Entity
             UserId = userId,
             Role = FamilyMemberRole.Member
         };
+    }
+
+    /// <summary>
+    /// Changes the member's role. The Owner role cannot be assigned this way —
+    /// ownership transfer is an explicit operation handled at the group level.
+    /// </summary>
+    public void ChangeRole(FamilyMemberRole newRole)
+    {
+        if (newRole == FamilyMemberRole.Owner)
+            throw new DomainException("Ownership transfer must be done explicitly via the group.");
+
+        if (Role == FamilyMemberRole.Owner)
+            throw new DomainException("The group owner's role cannot be changed.");
+
+        Role = newRole;
+        SetUpdated();
     }
 }

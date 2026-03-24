@@ -1,6 +1,6 @@
-﻿using BudgetWise.Domain.Common.Abstractions;
+using BudgetWise.Domain.Common.Abstractions;
+using BudgetWise.Domain.Exceptions;
 using BudgetWise.Domain.ValueObjects;
-using System.Transactions;
 
 namespace BudgetWise.Domain.Entities;
 
@@ -54,7 +54,19 @@ public class Category : Entity, IAggregateRoot
 
     public void Deactivate()
     {
+        if (IsSystem)
+            throw new DomainException("System categories cannot be deactivated.");
+
         IsActive = false;
+        SetUpdated();
+    }
+
+    public void Activate()
+    {
+        if (IsSystem)
+            throw new DomainException("System categories do not need to be manually activated.");
+
+        IsActive = true;
         SetUpdated();
     }
 }

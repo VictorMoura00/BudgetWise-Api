@@ -1,5 +1,6 @@
-﻿using BudgetWise.Domain.Common.Abstractions;
+using BudgetWise.Domain.Common.Abstractions;
 using BudgetWise.Domain.Enums;
+using BudgetWise.Domain.Events;
 using BudgetWise.Domain.Exceptions;
 
 namespace BudgetWise.Domain.Entities;
@@ -40,7 +41,13 @@ public class Transaction : Entity, ISoftDeletable, IAggregateRoot
         PaymentMethod? paymentMethod = null,
         Guid? familyGroupId = null)
     {
-        return new Transaction
+        if (string.IsNullOrWhiteSpace(description))
+            throw new DomainException("Transaction description cannot be empty.");
+
+        if (amount <= 0)
+            throw new DomainException("Transaction amount must be greater than zero.");
+
+        var transaction = new Transaction
         {
             UserId = userId,
             Description = description,
@@ -55,6 +62,11 @@ public class Transaction : Entity, ISoftDeletable, IAggregateRoot
             PaymentMethod = paymentMethod,
             FamilyGroupId = familyGroupId
         };
+
+        transaction.Raise(new TransactionCreatedEvent(
+            transaction.Id, userId, amount, type, transactionDate));
+
+        return transaction;
     }
 
     public void Update(
@@ -71,6 +83,12 @@ public class Transaction : Entity, ISoftDeletable, IAggregateRoot
     {
         if (IsDeleted)
             throw new DomainException("It is not possible to edit a deleted transaction.");
+
+        if (string.IsNullOrWhiteSpace(description))
+            throw new DomainException("Transaction description cannot be empty.");
+
+        if (amount <= 0)
+            throw new DomainException("Transaction amount must be greater than zero.");
 
         Description = description;
         Amount = amount;
@@ -92,12 +110,16 @@ public class Transaction : Entity, ISoftDeletable, IAggregateRoot
 
         IsConfirmed = true;
         SetUpdated();
+
+        Raise(new TransactionConfirmedEvent(Id, UserId));
     }
 
     public void SoftDelete()
     {
         DeletedAt = DateTime.UtcNow;
         SetUpdated();
+
+        Raise(new TransactionDeletedEvent(Id, UserId, DeletedAt.Value));
     }
 
     public bool IsDeleted => DeletedAt is not null;
