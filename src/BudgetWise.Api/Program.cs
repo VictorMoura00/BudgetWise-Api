@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BudgetWise.Api.Endpoints;
 using BudgetWise.Api.Extensions;
 using BudgetWise.Application;
@@ -5,6 +6,12 @@ using BudgetWise.Infrastructure;
 using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── JSON ───────────────────────────────────────────────────────────────────
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 // ── Logging ────────────────────────────────────────────────────────────────
 builder.AddSerilogConfiguration();
