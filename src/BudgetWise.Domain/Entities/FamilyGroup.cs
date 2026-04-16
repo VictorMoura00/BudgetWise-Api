@@ -19,13 +19,18 @@ public class FamilyGroup : Entity, IAggregateRoot
 
     public static FamilyGroup Create(Guid createdBy, string name, string? description = null)
     {
-        return new FamilyGroup
+        var group = new FamilyGroup
         {
             Name = name,
             Description = description,
             InviteCode = GenerateInviteCode(),
             CreatedBy = createdBy
         };
+
+        var owner = FamilyMember.CreateOwner(group.Id, createdBy);
+        group.Members.Add(owner);
+
+        return group;
     }
 
     public void Update(string name, string? description)

@@ -1,4 +1,5 @@
 using BudgetWise.Domain.Entities;
+using BudgetWise.Domain.Enums;
 using FluentAssertions;
 
 namespace BudgetWise.UnitTests.Domain.Entities;
@@ -86,11 +87,13 @@ public sealed class FamilyGroupTests
     }
 
     [Fact]
-    public void Create_ShouldInitializeEmptyCollections()
+    public void Create_ShouldAddCreatorAsOwnerMember()
     {
         var group = FamilyGroup.Create(OwnerId, "Test");
 
-        group.Members.Should().BeEmpty();
+        group.Members.Should().HaveCount(1);
+        group.Members.Single().UserId.Should().Be(OwnerId);
+        group.Members.Single().Role.Should().Be(FamilyMemberRole.Owner);
         group.Transactions.Should().BeEmpty();
         group.SharedExpenses.Should().BeEmpty();
     }
