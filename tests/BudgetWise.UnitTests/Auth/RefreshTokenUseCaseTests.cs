@@ -19,7 +19,7 @@ public sealed class RefreshTokenUseCaseTests
     public RefreshTokenUseCaseTests()
     {
         _configuration["Jwt:RefreshTokenExpirationDays"].Returns("7");
-        _tokenService.GenerateAccessToken(default, default!, default!).ReturnsForAnyArgs("new-access-token");
+        _tokenService.GenerateAccessToken(default, default!, default!, default).ReturnsForAnyArgs("new-access-token");
         _tokenService.GenerateRefreshToken().Returns("new-refresh-token");
 
         _sut = new RefreshTokenUseCase(_authService, _tokenService, _configuration);

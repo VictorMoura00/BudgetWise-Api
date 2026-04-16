@@ -25,7 +25,7 @@ public sealed class RefreshTokenUseCase(
 
         var user = validationResult.Value;
 
-        var newAccessToken = tokenService.GenerateAccessToken(user.Id, user.Email, user.FullName);
+        var newAccessToken = tokenService.GenerateAccessToken(user.Id, user.Email, user.FullName, user.Role);
         var newRefreshToken = tokenService.GenerateRefreshToken();
         var refreshTokenExpDays = int.Parse(configuration["Jwt:RefreshTokenExpirationDays"] ?? "7");
 

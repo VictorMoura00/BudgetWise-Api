@@ -25,7 +25,7 @@ public sealed class LoginUserUseCase(
 
         var user = credentialsResult.Value;
 
-        var accessToken = tokenService.GenerateAccessToken(user.Id, user.Email, user.FullName);
+        var accessToken = tokenService.GenerateAccessToken(user.Id, user.Email, user.FullName, user.Role);
         var refreshToken = tokenService.GenerateRefreshToken();
         var expDays = int.Parse(configuration["Jwt:RefreshTokenExpirationDays"] ?? "7");
 

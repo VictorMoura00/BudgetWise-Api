@@ -1,8 +1,10 @@
 ﻿using BudgetWise.Api.Endpoints;
+using BudgetWise.Application.Identity;
 using BudgetWise.Infrastructure.Persistence;
 using BudgetWise.Infrastructure.Seeds;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace BudgetWise.Api.Extensions;
@@ -20,6 +22,10 @@ public static class HostExtensions
         await context.Database.MigrateAsync();
 
         await CategorySeeder.SeedAsync(context, logger);
+
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        await AdminSeeder.SeedAsync(userManager, configuration, logger);
     }
 
     public static WebApplication UseStartupLog(this WebApplication app)

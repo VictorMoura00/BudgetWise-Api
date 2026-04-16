@@ -38,7 +38,10 @@ public static class AuthenticationExtensions
         }
     });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+        });
         services.AddHttpContextAccessor();
 
         // Serviço responsável por gerar e validar tokens JWT

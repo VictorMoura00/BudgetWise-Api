@@ -1,5 +1,6 @@
 using Bogus;
 using BudgetWise.Application.Auth.DTOs;
+using BudgetWise.Application.Identity;
 using BudgetWise.Application.Interfaces;
 
 namespace BudgetWise.UnitTests.Common;
@@ -22,8 +23,9 @@ public static class AuthFaker
         UserId: Guid.NewGuid(),
         RefreshToken: Faker.Random.AlphaNumeric(64));
 
-    public static AuthUserDto AuthUserDto() => new(
+    public static AuthUserDto AuthUserDto(UserRole role = UserRole.User) => new(
         Id: Guid.NewGuid(),
         Email: Faker.Internet.Email(),
-        FullName: Faker.Name.FullName());
+        FullName: Faker.Name.FullName(),
+        Role: role);
 }

@@ -19,7 +19,7 @@ public sealed class RegisterUserUseCaseTests
     public RegisterUserUseCaseTests()
     {
         _configuration["Jwt:RefreshTokenExpirationDays"].Returns("7");
-        _tokenService.GenerateAccessToken(default, default!, default!).ReturnsForAnyArgs("access-token");
+        _tokenService.GenerateAccessToken(default, default!, default!, default).ReturnsForAnyArgs("access-token");
         _tokenService.GenerateRefreshToken().Returns("refresh-token");
 
         _sut = new RegisterUserUseCase(_authService, _tokenService, _configuration);

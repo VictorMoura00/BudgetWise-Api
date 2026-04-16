@@ -1,4 +1,5 @@
-﻿using BudgetWise.Domain.Common.Results;
+﻿using BudgetWise.Application.Identity;
+using BudgetWise.Domain.Common.Results;
 
 namespace BudgetWise.Application.Interfaces;
 
@@ -51,5 +52,6 @@ public interface IAuthService
 public sealed record AuthUserDto(
     Guid Id,
     string Email,
-    string FullName
+    string FullName,
+    UserRole Role
 );

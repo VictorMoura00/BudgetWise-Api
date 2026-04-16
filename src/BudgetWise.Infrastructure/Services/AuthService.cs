@@ -36,7 +36,7 @@ public sealed class AuthService(UserManager<ApplicationUser> userManager) : IAut
             return AuthErrors.RegistrationFailed(errors);
         }
 
-        return new AuthUserDto(user.Id, user.Email!, user.FullName);
+        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role);
     }
 
     public async Task<Result<AuthUserDto>> ValidateCredentialsAsync(
@@ -63,7 +63,7 @@ public sealed class AuthService(UserManager<ApplicationUser> userManager) : IAut
 
         await userManager.ResetAccessFailedCountAsync(user);
 
-        return new AuthUserDto(user.Id, user.Email!, user.FullName);
+        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role);
     }
 
     public async Task<Result<AuthUserDto>> ValidateRefreshTokenAsync(
@@ -97,7 +97,7 @@ public sealed class AuthService(UserManager<ApplicationUser> userManager) : IAut
             return AuthErrors.InvalidRefreshToken;
         }
 
-        return new AuthUserDto(user.Id, user.Email!, user.FullName);
+        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role);
     }
 
     public async Task StoreRefreshTokenAsync(

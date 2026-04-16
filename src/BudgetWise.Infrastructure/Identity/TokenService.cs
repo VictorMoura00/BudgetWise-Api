@@ -1,4 +1,5 @@
-﻿using BudgetWise.Application.Interfaces;
+﻿using BudgetWise.Application.Identity;
+using BudgetWise.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,7 +11,7 @@ namespace BudgetWise.Infrastructure.Identity;
 
 public class TokenService(IConfiguration configuration) : ITokenService
 {
-    public string GenerateAccessToken(Guid userId, string email, string fullName)
+    public string GenerateAccessToken(Guid userId, string email, string fullName, UserRole role)
     {
         var secret = configuration["Jwt:Secret"]
             ?? throw new InvalidOperationException("JWT Secret not configured.");
@@ -23,7 +24,8 @@ public class TokenService(IConfiguration configuration) : ITokenService
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(JwtRegisteredClaimNames.Name, fullName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.Role, role.ToString())
         };
 
         var expiration = int.Parse(configuration["Jwt:AccessTokenExpirationMinutes"] ?? "15");
