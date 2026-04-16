@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    name: Build, Test & Format
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: budgetwise_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependências
+        run: dotnet restore
+
+      - name: Verificar formatação
+        run: dotnet format --verify-no-changes
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Testes unitários
+        run: dotnet test tests/BudgetWise.UnitTests --no-build --configuration Release --logger "console;verbosity=minimal"
+
+      - name: Testes de integração
+        run: dotnet test tests/BudgetWise.IntegrationTests --no-build --configuration Release --logger "console;verbosity=minimal"
+        env:
+          ConnectionStrings__Default: "Host=localhost;Port=5432;Database=budgetwise_test;Username=postgres;Password=postgres"
