@@ -1,4 +1,5 @@
-using BudgetWise.Application.Auth.Login;
+using BudgetWise.Application.Auth.DTOs;
+using BudgetWise.Application.Auth.Validators;
 using FluentAssertions;
 
 namespace BudgetWise.UnitTests.Auth.Validators;

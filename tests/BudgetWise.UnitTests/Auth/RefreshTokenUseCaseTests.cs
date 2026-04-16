@@ -1,5 +1,6 @@
 using BudgetWise.Application.Auth.Common;
-using BudgetWise.Application.Auth.RefreshToken;
+using BudgetWise.Application.Auth.UseCases;
+using BudgetWise.Application.Auth.DTOs;
 using BudgetWise.Application.Interfaces;
 using BudgetWise.UnitTests.Common;
 using FluentAssertions;

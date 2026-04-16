@@ -1,9 +1,8 @@
+using BudgetWise.Api.Extensions;
 using BudgetWise.Api.Filters;
 using BudgetWise.Application.Auth.Common;
-using BudgetWise.Application.Auth.Login;
-using BudgetWise.Application.Auth.RefreshToken;
-using BudgetWise.Application.Auth.Register;
-using BudgetWise.Api.Extensions;
+using BudgetWise.Application.Auth.DTOs;
+using BudgetWise.Application.Auth.UseCases;
 
 namespace BudgetWise.Api.Endpoints;
 

@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Bogus;
 using BudgetWise.Application.Auth.Common;
-using BudgetWise.Application.Auth.Register;
+using BudgetWise.Application.Auth.DTOs;
 using BudgetWise.Application.Tags.DTOs;
 using BudgetWise.Application.Transactions.DTOs;
 using BudgetWise.Domain.Enums;

@@ -1,4 +1,4 @@
-﻿using BudgetWise.Application.Auth.Register;
+﻿using BudgetWise.Application.Auth.Validators;
 using BudgetWise.Application.Identity;
 using BudgetWise.Domain.Common.Interfaces;
 using BudgetWise.Domain.Interfaces;

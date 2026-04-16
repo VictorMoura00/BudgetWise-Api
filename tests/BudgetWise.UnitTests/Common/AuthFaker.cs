@@ -1,7 +1,5 @@
-﻿using Bogus;
-using BudgetWise.Application.Auth.Login;
-using BudgetWise.Application.Auth.RefreshToken;
-using BudgetWise.Application.Auth.Register;
+using Bogus;
+using BudgetWise.Application.Auth.DTOs;
 using BudgetWise.Application.Interfaces;
 
 namespace BudgetWise.UnitTests.Common;

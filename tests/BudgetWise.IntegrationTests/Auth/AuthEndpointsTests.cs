@@ -2,9 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Bogus;
 using BudgetWise.Application.Auth.Common;
-using BudgetWise.Application.Auth.Login;
-using BudgetWise.Application.Auth.RefreshToken;
-using BudgetWise.Application.Auth.Register;
+using BudgetWise.Application.Auth.DTOs;
 using BudgetWise.IntegrationTests.Infrastructure;
 using FluentAssertions;
 
