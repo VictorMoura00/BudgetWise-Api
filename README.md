@@ -1,6 +1,6 @@
 # BudgetWise API
 
-> API de organização financeira pessoal com suporte a núcleo familiar.
+> API de organização financeira pessoal.
 > Construída com **.NET 10**, **PostgreSQL** e Clean Architecture.
 
 ---
@@ -23,7 +23,7 @@
 
 ## Visão Geral
 
-O **BudgetWise** é uma API RESTful para organização financeira pessoal com suporte a grupos familiares. O objetivo é oferecer uma base robusta para registro, categorização e consulta de transações financeiras — receitas e despesas — com filtros avançados, paginação, resumo financeiro e divisão de despesas entre membros do grupo familiar.
+O **BudgetWise** é uma API RESTful para organização financeira pessoal. O objetivo é oferecer uma base robusta para registro, categorização e consulta de transações financeiras — receitas e despesas — com filtros avançados, paginação e resumo financeiro.
 
 O projeto serve como portfólio técnico demonstrando domínio de **Clean Architecture**, **ASP.NET Core Minimal APIs**, modelagem relacional consistente no PostgreSQL e autenticação interna com ASP.NET Core Identity. Um frontend Angular será desenvolvido em repositório separado e integrado via Docker Compose.
 
@@ -326,23 +326,29 @@ Todos os logs são emitidos em JSON estruturado e enviados ao Seq. São registra
 
 ## Roadmap
 
-### v1.0 — Em desenvolvimento
+### v1.0 — Uso individual ✅
 - [x] Estrutura de solução com Clean Architecture
 - [x] Infraestrutura: Identity, JWT, EF Core, Serilog, Health Checks, Docker Compose
-- [ ] Entidades e enums do domínio
-- [ ] Fluent API configurations + primeira migration
+- [x] Entidades e enums do domínio
+- [x] Fluent API configurations + migrations
+- [x] Use Cases de Auth (registro, login, refresh token)
+- [x] Use Cases de Transações, Categorias, Tags
+- [x] Testes unitários e de integração
 - [ ] Seed de categorias do sistema
-- [ ] Use Cases de Auth (registro, login, refresh token)
-- [ ] Use Cases de Transações, Categorias, Tags
-- [ ] Use Cases de Grupos Familiares e Despesas Compartilhadas
-- [ ] Testes unitários e de integração
 - [ ] Pipeline CI com GitHub Actions
 
-### v2.0 — Planejado
-- [ ] Dashboards e relatórios analíticos
+### v2.0 — Dashboards e relatórios
+- [ ] Resumo financeiro por período (receitas, despesas, saldo)
+- [ ] Relatório de gastos por categoria
+- [ ] Relatório de gastos por tag
 - [ ] Importação de extratos bancários (OFX/CSV)
 - [ ] Notificações e alertas automáticos
 - [ ] Frontend Angular (repositório separado)
+
+### v3.0 — Uso compartilhado
+- [x] Grupos Familiares (criação, convite, gerenciamento de membros)
+- [ ] Despesas Compartilhadas (divisão e quitação entre membros)
+- [ ] Testes de integração para Grupos Familiares e Despesas Compartilhadas
 
 ---
 
