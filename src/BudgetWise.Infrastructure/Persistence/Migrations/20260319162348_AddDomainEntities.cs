@@ -306,7 +306,7 @@ namespace BudgetWise.Infrastructure.Persistence.Migrations
                                  CREATE INDEX ix_transactions_fts
                                  ON transactions USING gin(to_tsvector('portuguese', description));
                                  """);
-            }
+        }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)

@@ -39,7 +39,7 @@ public static class CategorySeeder
             Category.CreateSystem("Transferência",                  icon: "arrow-left-right"),
             Category.CreateSystem("Investimento",                   icon: "piggy-bank"),
             Category.CreateSystem("Reembolso",                      icon: "rotate-ccw"),
-        };      
+        };
 
         await context.Categories.AddRangeAsync(categories);
         await context.SaveChangesAsync();
