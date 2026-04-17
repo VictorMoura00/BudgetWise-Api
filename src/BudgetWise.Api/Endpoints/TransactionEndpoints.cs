@@ -42,6 +42,37 @@ public class TransactionEndpoints : IEndpointModule
         .Produces<PaginatedTransactionResponse>()
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        group.MapGet("/summary", async (
+            [FromQuery] DateOnly? startDate,
+            [FromQuery] DateOnly? endDate,
+            GetTransactionSummaryUseCase useCase,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await useCase.ExecuteAsync(userId, startDate, endDate, cancellationToken);
+            return result.ToResponse(Results.Ok);
+        })
+        .WithName("GetTransactionSummary")
+        .WithSummary("Retorna totais de receita, despesa, saldo e pendências no período")
+        .Produces<TransactionSummaryResponse>()
+        .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        group.MapGet("/monthly-summary", async (
+            [FromQuery] int months,
+            GetMonthlySummaryUseCase useCase,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await useCase.ExecuteAsync(userId, months < 1 ? 6 : months, cancellationToken);
+            return result.ToResponse(Results.Ok);
+        })
+        .WithName("GetMonthlySummary")
+        .WithSummary("Retorna evolução mensal de receitas e despesas (padrão: 6 meses)")
+        .Produces<IReadOnlyList<MonthlySummaryResponse>>()
+        .ProducesProblem(StatusCodes.Status401Unauthorized);
+
         group.MapGet("/{id:guid}", async (
             Guid id,
             GetTransactionByIdUseCase useCase,

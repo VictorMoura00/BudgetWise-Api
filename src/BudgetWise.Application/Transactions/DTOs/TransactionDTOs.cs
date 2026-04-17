@@ -12,6 +12,8 @@ public sealed record TransactionResponse(
     TransactionType Type,
     DateOnly TransactionDate,
     Guid? CategoryId,
+    string? CategoryName,
+    string? CategoryColor,
     string? Notes,
     RecurrenceType RecurrenceType,
     DateOnly? RecurrenceEndDate,
@@ -59,6 +61,16 @@ public sealed record GetTransactionsRequest(
     DateOnly? EndDate = null,
     bool? IsConfirmed = null
 );
+
+public sealed record TransactionSummaryResponse(
+    decimal TotalIncome,
+    decimal TotalExpense,
+    decimal Balance,
+    int PendingCount,
+    decimal PendingAmount
+);
+
+public sealed record MonthlySummaryResponse(string Month, decimal Income, decimal Expense);
 
 public sealed record PaginatedTransactionResponse(
     IReadOnlyCollection<TransactionResponse> Items,

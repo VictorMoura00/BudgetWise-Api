@@ -23,6 +23,7 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
     {
         var query = Context.Set<Transaction>()
             .AsNoTracking()
+            .Include(t => t.Category)
             .Include(t => t.TransactionTags)
                 .ThenInclude(tt => tt.Tag)
             .Where(t => t.UserId == userId && t.DeletedAt == null);
@@ -60,10 +61,71 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
         CancellationToken cancellationToken = default)
     {
         return await Context.Set<Transaction>()
+            .Include(t => t.Category)
             .Include(t => t.TransactionTags)
                 .ThenInclude(tt => tt.Tag)
             .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId && t.DeletedAt == null,
                 cancellationToken);
+    }
+
+    public async Task<TransactionSummaryResult> GetSummaryForUserAsync(
+        Guid userId,
+        DateOnly? startDate,
+        DateOnly? endDate,
+        CancellationToken cancellationToken = default)
+    {
+        var query = Context.Set<Transaction>()
+            .AsNoTracking()
+            .Where(t => t.UserId == userId && t.DeletedAt == null);
+
+        if (startDate is not null)
+            query = query.Where(t => t.TransactionDate >= startDate);
+
+        if (endDate is not null)
+            query = query.Where(t => t.TransactionDate <= endDate);
+
+        var result = await query
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalIncome = g.Where(t => t.Type == TransactionType.Income).Sum(t => (decimal?)t.Amount) ?? 0m,
+                TotalExpense = g.Where(t => t.Type == TransactionType.Expense).Sum(t => (decimal?)t.Amount) ?? 0m,
+                PendingCount = g.Count(t => !t.IsConfirmed),
+                PendingAmount = g.Where(t => !t.IsConfirmed).Sum(t => (decimal?)t.Amount) ?? 0m
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return result is null
+            ? new TransactionSummaryResult(0m, 0m, 0, 0m)
+            : new TransactionSummaryResult(result.TotalIncome, result.TotalExpense, result.PendingCount, result.PendingAmount);
+    }
+
+    public async Task<IReadOnlyList<MonthlySummaryResult>> GetMonthlySummaryForUserAsync(
+        Guid userId,
+        int months,
+        CancellationToken cancellationToken = default)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var startDate = new DateOnly(today.AddMonths(-(months - 1)).Year, today.AddMonths(-(months - 1)).Month, 1);
+
+        var items = await Context.Set<Transaction>()
+            .AsNoTracking()
+            .Where(t => t.UserId == userId && t.DeletedAt == null && t.TransactionDate >= startDate)
+            .GroupBy(t => new { t.TransactionDate.Year, t.TransactionDate.Month })
+            .Select(g => new
+            {
+                g.Key.Year,
+                g.Key.Month,
+                Income = g.Where(t => t.Type == TransactionType.Income).Sum(t => (decimal?)t.Amount) ?? 0m,
+                Expense = g.Where(t => t.Type == TransactionType.Expense).Sum(t => (decimal?)t.Amount) ?? 0m
+            })
+            .OrderBy(r => r.Year).ThenBy(r => r.Month)
+            .ToListAsync(cancellationToken);
+
+        return items
+            .Select(r => new MonthlySummaryResult(r.Year, r.Month, r.Income, r.Expense))
+            .ToList()
+            .AsReadOnly();
     }
 
     public async Task<bool> IsTagLinkedAsync(

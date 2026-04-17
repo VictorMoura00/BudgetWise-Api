@@ -36,9 +36,9 @@ public sealed class GetTransactionsUseCase(ITransactionRepository repository) : 
 
             return new TransactionResponse(
                 t.Id, t.UserId, t.Description, t.Amount, t.Type,
-                t.TransactionDate, t.CategoryId, t.Notes, t.RecurrenceType,
-                t.RecurrenceEndDate, t.IsConfirmed, t.PaymentMethod,
-                t.FamilyGroupId, t.CreatedAt, t.UpdatedAt, tags);
+                t.TransactionDate, t.CategoryId, t.Category?.Name, t.Category?.Color,
+                t.Notes, t.RecurrenceType, t.RecurrenceEndDate, t.IsConfirmed,
+                t.PaymentMethod, t.FamilyGroupId, t.CreatedAt, t.UpdatedAt, tags);
         });
 
         return PaginatedTransactionResponse.FromPaginatedList(response);

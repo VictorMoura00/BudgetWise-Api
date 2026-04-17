@@ -38,6 +38,7 @@ public sealed class ConfirmTransactionUseCase(
         return new TransactionResponse(
             transaction.Id, transaction.UserId, transaction.Description, transaction.Amount,
             transaction.Type, transaction.TransactionDate, transaction.CategoryId,
+            transaction.Category?.Name, transaction.Category?.Color,
             transaction.Notes, transaction.RecurrenceType, transaction.RecurrenceEndDate,
             transaction.IsConfirmed, transaction.PaymentMethod, transaction.FamilyGroupId,
             transaction.CreatedAt, transaction.UpdatedAt, tags);

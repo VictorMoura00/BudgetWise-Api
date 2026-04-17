@@ -37,6 +37,7 @@ public sealed class CreateTransactionUseCase(
         return new TransactionResponse(
             transaction.Id, transaction.UserId, transaction.Description, transaction.Amount,
             transaction.Type, transaction.TransactionDate, transaction.CategoryId,
+            null, null,
             transaction.Notes, transaction.RecurrenceType, transaction.RecurrenceEndDate,
             transaction.IsConfirmed, transaction.PaymentMethod, transaction.FamilyGroupId,
             transaction.CreatedAt, transaction.UpdatedAt,

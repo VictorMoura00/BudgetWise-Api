@@ -23,6 +23,17 @@ public interface ITransactionRepository : IRepository<Transaction>
         Guid userId,
         CancellationToken cancellationToken = default);
 
+    Task<TransactionSummaryResult> GetSummaryForUserAsync(
+        Guid userId,
+        DateOnly? startDate,
+        DateOnly? endDate,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<MonthlySummaryResult>> GetMonthlySummaryForUserAsync(
+        Guid userId,
+        int months,
+        CancellationToken cancellationToken = default);
+
     Task<bool> IsTagLinkedAsync(
         Guid transactionId,
         Guid tagId,
