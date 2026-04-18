@@ -128,6 +128,125 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
             .AsReadOnly();
     }
 
+    public async Task<Transaction?> GetLargestExpenseForUserAsync(
+        Guid userId,
+        DateOnly startDate,
+        DateOnly endDate,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<Transaction>()
+            .AsNoTracking()
+            .Include(t => t.Category)
+            .Where(t => t.UserId == userId && t.DeletedAt == null
+                     && t.Type == TransactionType.Expense
+                     && t.TransactionDate >= startDate && t.TransactionDate <= endDate)
+            .OrderByDescending(t => t.Amount)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<MonthProjectionResult> GetMonthProjectionForUserAsync(
+        Guid userId,
+        int year,
+        int month,
+        CancellationToken cancellationToken = default)
+    {
+        var startDate = new DateOnly(year, month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(-1);
+
+        var result = await Context.Set<Transaction>()
+            .AsNoTracking()
+            .Where(t => t.UserId == userId && t.DeletedAt == null
+                     && t.TransactionDate >= startDate && t.TransactionDate <= endDate)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                ConfirmedIncome = g.Where(t => t.IsConfirmed && t.Type == TransactionType.Income).Sum(t => (decimal?)t.Amount) ?? 0m,
+                ConfirmedExpense = g.Where(t => t.IsConfirmed && t.Type == TransactionType.Expense).Sum(t => (decimal?)t.Amount) ?? 0m,
+                PendingIncome = g.Where(t => !t.IsConfirmed && t.Type == TransactionType.Income).Sum(t => (decimal?)t.Amount) ?? 0m,
+                PendingExpense = g.Where(t => !t.IsConfirmed && t.Type == TransactionType.Expense).Sum(t => (decimal?)t.Amount) ?? 0m,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (result is null)
+            return new MonthProjectionResult(0m, 0m, 0m);
+
+        var confirmedBalance = result.ConfirmedIncome - result.ConfirmedExpense;
+        var pendingImpact = result.PendingIncome - result.PendingExpense;
+        return new MonthProjectionResult(confirmedBalance, pendingImpact, confirmedBalance + pendingImpact);
+    }
+
+    public async Task<IReadOnlyList<CategoryComparisonResult>> GetCategoryComparisonForUserAsync(
+        Guid userId,
+        DateOnly currentStart,
+        DateOnly currentEnd,
+        DateOnly previousStart,
+        DateOnly previousEnd,
+        CancellationToken cancellationToken = default)
+    {
+        var currentData = await Context.Set<Transaction>()
+            .AsNoTracking()
+            .Where(t => t.UserId == userId && t.DeletedAt == null && t.Type == TransactionType.Expense
+                     && t.TransactionDate >= currentStart && t.TransactionDate <= currentEnd)
+            .GroupBy(t => t.CategoryId)
+            .Select(g => new { CategoryId = g.Key, Amount = g.Sum(t => (decimal?)t.Amount) ?? 0m })
+            .ToListAsync(cancellationToken);
+
+        var previousData = await Context.Set<Transaction>()
+            .AsNoTracking()
+            .Where(t => t.UserId == userId && t.DeletedAt == null && t.Type == TransactionType.Expense
+                     && t.TransactionDate >= previousStart && t.TransactionDate <= previousEnd)
+            .GroupBy(t => t.CategoryId)
+            .Select(g => new { CategoryId = g.Key, Amount = g.Sum(t => (decimal?)t.Amount) ?? 0m })
+            .ToListAsync(cancellationToken);
+
+        var categoryIds = currentData.Select(c => c.CategoryId)
+            .Concat(previousData.Select(c => c.CategoryId))
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        var categoryLookup = categoryIds.Count > 0
+            ? await Context.Set<Category>()
+                .AsNoTracking()
+                .Where(c => categoryIds.Contains(c.Id))
+                .Select(c => new { c.Id, c.Name, c.Color })
+                .ToDictionaryAsync(c => c.Id, cancellationToken)
+            : [];
+
+        var previousDict = previousData.ToDictionary(p => p.CategoryId?.ToString() ?? string.Empty, p => p.Amount);
+        var currentDict = currentData.ToDictionary(c => c.CategoryId?.ToString() ?? string.Empty, c => c.Amount);
+
+        var allKeys = currentData.Select(c => c.CategoryId)
+            .Union(previousData.Select(c => c.CategoryId))
+            .Distinct();
+
+        return allKeys
+            .Select(categoryId =>
+            {
+                string name;
+                string? color;
+                if (categoryId.HasValue && categoryLookup.TryGetValue(categoryId.Value, out var cat))
+                {
+                    name = cat.Name;
+                    color = cat.Color;
+                }
+                else
+                {
+                    name = "Sem categoria";
+                    color = null;
+                }
+
+                var key = categoryId?.ToString() ?? string.Empty;
+                var current = currentDict.GetValueOrDefault(key, 0m);
+                var previous = previousDict.GetValueOrDefault(key, 0m);
+                return new CategoryComparisonResult(categoryId, name, color, current, previous);
+            })
+            .OrderByDescending(r => r.CurrentAmount)
+            .ToList()
+            .AsReadOnly();
+    }
+
     public async Task<bool> IsTagLinkedAsync(
         Guid transactionId,
         Guid tagId,

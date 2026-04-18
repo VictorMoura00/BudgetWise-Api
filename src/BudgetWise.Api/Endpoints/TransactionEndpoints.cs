@@ -42,6 +42,22 @@ public class TransactionEndpoints : IEndpointModule
         .Produces<PaginatedTransactionResponse>()
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        group.MapGet("/dashboard", async (
+            [FromQuery] DateOnly? startDate,
+            [FromQuery] DateOnly? endDate,
+            GetDashboardSummaryUseCase useCase,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await useCase.ExecuteAsync(userId, startDate, endDate, cancellationToken);
+            return result.ToResponse(Results.Ok);
+        })
+        .WithName("GetDashboardSummary")
+        .WithSummary("Retorna KPIs consolidados para o dashboard: taxa de poupança, maior gasto, projeção do mês e comparativo por categoria")
+        .Produces<DashboardSummaryResponse>()
+        .ProducesProblem(StatusCodes.Status401Unauthorized);
+
         group.MapGet("/summary", async (
             [FromQuery] DateOnly? startDate,
             [FromQuery] DateOnly? endDate,

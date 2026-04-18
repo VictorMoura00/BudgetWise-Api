@@ -12,7 +12,7 @@ public sealed class CategoryTests
     [Fact]
     public void CreateSystem_ShouldSetIsSystemTrue_AndNullUserId()
     {
-        var category = Category.CreateSystem("Alimentação", "🍔", "Gastos com comida");
+        var category = Category.CreateSystem("Alimentação", icon: "🍔", description: "Gastos com comida");
 
         category.Name.Should().Be("Alimentação");
         category.Icon.Should().Be("🍔");

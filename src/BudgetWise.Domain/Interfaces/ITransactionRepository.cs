@@ -34,6 +34,26 @@ public interface ITransactionRepository : IRepository<Transaction>
         int months,
         CancellationToken cancellationToken = default);
 
+    Task<Transaction?> GetLargestExpenseForUserAsync(
+        Guid userId,
+        DateOnly startDate,
+        DateOnly endDate,
+        CancellationToken cancellationToken = default);
+
+    Task<MonthProjectionResult> GetMonthProjectionForUserAsync(
+        Guid userId,
+        int year,
+        int month,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<CategoryComparisonResult>> GetCategoryComparisonForUserAsync(
+        Guid userId,
+        DateOnly currentStart,
+        DateOnly currentEnd,
+        DateOnly previousStart,
+        DateOnly previousEnd,
+        CancellationToken cancellationToken = default);
+
     Task<bool> IsTagLinkedAsync(
         Guid transactionId,
         Guid tagId,

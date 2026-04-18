@@ -72,6 +72,39 @@ public sealed record TransactionSummaryResponse(
 
 public sealed record MonthlySummaryResponse(string Month, decimal Income, decimal Expense);
 
+public sealed record LargestExpenseInfo(
+    Guid Id,
+    string Description,
+    decimal Amount,
+    string? CategoryName,
+    string? CategoryColor,
+    DateOnly TransactionDate
+);
+
+public sealed record CategoryComparisonItem(
+    Guid? CategoryId,
+    string CategoryName,
+    string? CategoryColor,
+    decimal CurrentAmount,
+    decimal PreviousAmount,
+    decimal Difference,
+    decimal? PercentageChange
+);
+
+public sealed record DashboardSummaryResponse(
+    decimal TotalIncome,
+    decimal TotalExpense,
+    decimal Balance,
+    int PendingCount,
+    decimal PendingAmount,
+    decimal? SavingsRate,
+    LargestExpenseInfo? LargestExpense,
+    decimal ConfirmedBalance,
+    decimal PendingImpact,
+    decimal ProjectedBalance,
+    IReadOnlyList<CategoryComparisonItem> CategoryComparison
+);
+
 public sealed record PaginatedTransactionResponse(
     IReadOnlyCollection<TransactionResponse> Items,
     int PageNumber,

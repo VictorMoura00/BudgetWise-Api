@@ -24,7 +24,7 @@ public sealed class CategorySeederTests
     }
 
     [Fact]
-    public async Task SeedAsync_WhenNoCategoriesExist_Inserts17SystemCategories()
+    public async Task SeedAsync_WhenNoCategoriesExist_Inserts10SystemCategories()
     {
         // Arrange
         await using var context = CreateInMemoryContext();
@@ -35,7 +35,7 @@ public sealed class CategorySeederTests
 
         // Assert
         var count = await context.Categories.CountAsync(c => c.IsSystem);
-        count.Should().Be(17);
+        count.Should().Be(10);
     }
 
     [Fact]
@@ -76,9 +76,9 @@ public sealed class CategorySeederTests
         await CategorySeeder.SeedAsync(context, NullLogger.Instance);
         await CategorySeeder.SeedAsync(context, NullLogger.Instance);
 
-        // Assert — idempotente: ainda 17
+        // Assert — idempotente: ainda 10
         var count = await context.Categories.CountAsync();
-        count.Should().Be(17);
+        count.Should().Be(10);
     }
 
     [Fact]
@@ -95,8 +95,8 @@ public sealed class CategorySeederTests
         // Act
         await CategorySeeder.SeedAsync(context, NullLogger.Instance);
 
-        // Assert — seed ignorado, somente a pessoal foi adicionada além das 17
+        // Assert — seed ignorado, somente a pessoal foi adicionada além das 10
         var count = await context.Categories.CountAsync();
-        count.Should().Be(18);
+        count.Should().Be(11);
     }
 }

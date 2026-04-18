@@ -18,12 +18,13 @@ public class Category : Entity, IAggregateRoot
 
     private Category() { }
 
-    public static Category CreateSystem(string name, string? icon = null, string? description = null)
+    public static Category CreateSystem(string name, string? icon = null, HexColor? color = null, string? description = null)
     {
         return new Category
         {
             Name = name,
             Icon = icon,
+            Color = color,
             Description = description,
             IsSystem = true,
             UserId = null

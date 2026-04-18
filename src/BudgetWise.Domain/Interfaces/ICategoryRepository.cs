@@ -33,4 +33,14 @@ public interface ICategoryRepository : IRepository<Category>
         Guid userId,
         Guid? excludeId = null,
         CancellationToken cancellationToken = default);
+
+    Task ExcludeSystemCategoryForUserAsync(
+        Guid userId,
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> IsSystemCategoryExcludedAsync(
+        Guid userId,
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
 }

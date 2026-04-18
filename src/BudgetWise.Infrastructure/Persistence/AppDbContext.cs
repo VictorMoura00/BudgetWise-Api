@@ -13,6 +13,7 @@ public class AppDbContext(
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<UserCategoryExclusion> UserCategoryExclusions => Set<UserCategoryExclusion>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<TransactionTag> TransactionTags => Set<TransactionTag>();

@@ -1,4 +1,5 @@
 using BudgetWise.Domain.Entities;
+using BudgetWise.Domain.ValueObjects;
 using BudgetWise.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -18,27 +19,25 @@ public static class CategorySeeder
 
         logger.LogInformation("CategorySeeder: seeding system categories...");
 
+        static HexColor Color(string hex) => HexColor.Create(hex).Value!;
+
         var categories = new List<Category>
         {
-            Category.CreateSystem("Alimentação",                    icon: "utensils"),
-            Category.CreateSystem("Transporte",                     icon: "car"),
-            Category.CreateSystem("Moradia",                        icon: "home"),
-            Category.CreateSystem("Saúde",                          icon: "heart-pulse"),
-            Category.CreateSystem("Lazer",                          icon: "gamepad-2"),
-            Category.CreateSystem("Educação",                       icon: "graduation-cap"),
-            Category.CreateSystem("Assinaturas e Serviços",         icon: "repeat"),
-            Category.CreateSystem("Vestuário",                      icon: "shirt"),
-            Category.CreateSystem("Cuidados Pessoais",              icon: "sparkles"),
+            // Despesas
+            Category.CreateSystem("Alimentação",    icon: "utensils",          color: Color("#EF4444")),
+            Category.CreateSystem("Transporte",     icon: "car",               color: Color("#3B82F6")),
+            Category.CreateSystem("Moradia",        icon: "house",             color: Color("#8B5CF6")),
+            Category.CreateSystem("Saúde",          icon: "heart-pulse",       color: Color("#EC4899")),
+            Category.CreateSystem("Lazer",          icon: "tv-2",              color: Color("#F59E0B")),
+            Category.CreateSystem("Educação",       icon: "graduation-cap",    color: Color("#10B981")),
 
-            Category.CreateSystem("Salário",                        icon: "banknote"),
-            Category.CreateSystem("Freelance",                      icon: "briefcase"),
-            Category.CreateSystem("Rendimento de Investimentos",    icon: "trending-up"),
-            Category.CreateSystem("Aluguel Recebido",               icon: "building"),
-            Category.CreateSystem("Presente",                       icon: "gift"),
+            // Receitas
+            Category.CreateSystem("Salário",        icon: "banknote",          color: Color("#22C55E")),
+            Category.CreateSystem("Freelance",      icon: "briefcase",         color: Color("#06B6D4")),
 
-            Category.CreateSystem("Transferência",                  icon: "arrow-left-right"),
-            Category.CreateSystem("Investimento",                   icon: "piggy-bank"),
-            Category.CreateSystem("Reembolso",                      icon: "rotate-ccw"),
+            // Neutras
+            Category.CreateSystem("Investimento",   icon: "trending-up",       color: Color("#6366F1")),
+            Category.CreateSystem("Transferência",  icon: "arrow-left-right",  color: Color("#64748B")),
         };
 
         await context.Categories.AddRangeAsync(categories);

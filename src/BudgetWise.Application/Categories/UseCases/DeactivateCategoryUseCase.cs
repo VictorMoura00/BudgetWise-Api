@@ -21,7 +21,15 @@ public sealed class DeactivateCategoryUseCase(
             return Result.Failure(CategoryErrors.NotFound(id));
 
         if (category.IsSystem)
-            return Result.Failure(CategoryErrors.CannotModifySystemCategory);
+        {
+            var alreadyExcluded = await repository.IsSystemCategoryExcludedAsync(userId, id, cancellationToken);
+            if (alreadyExcluded)
+                return Result.Failure(CategoryErrors.SystemCategoryAlreadyExcluded);
+
+            await repository.ExcludeSystemCategoryForUserAsync(userId, id, cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
+            return Result.Success();
+        }
 
         if (!category.IsActive)
             return Result.Failure(CategoryErrors.CannotModifyInactiveCategory);
