@@ -1,4 +1,5 @@
-﻿using Serilog;
+using System.Security.Claims;
+using Serilog;
 using Serilog.Formatting.Json;
 
 namespace BudgetWise.Api.Extensions;
@@ -38,5 +39,24 @@ public static class SerilogExtensions
 
         builder.Logging.AddSerilog(logger);
         builder.Host.UseSerilog(logger);
+    }
+
+    public static WebApplication UseSerilogRequestLoggingWithContext(this WebApplication app)
+    {
+        app.UseSerilogRequestLogging(options =>
+        {
+            options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+            {
+                var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrEmpty(userId))
+                    diagnosticContext.Set("UserId", userId);
+
+                diagnosticContext.Set("TraceIdentifier", httpContext.TraceIdentifier);
+                diagnosticContext.Set("RequestPath", httpContext.Request.Path);
+                diagnosticContext.Set("RequestMethod", httpContext.Request.Method);
+            };
+        });
+
+        return app;
     }
 }
