@@ -160,16 +160,17 @@ public class TransactionEndpoints : IEndpointModule
 
         group.MapPatch("/{id:guid}/confirm", async (
             Guid id,
+            ConfirmTransactionRequest? request,
             ConfirmTransactionUseCase useCase,
             ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var result = await useCase.ExecuteAsync(id, userId, cancellationToken);
+            var result = await useCase.ExecuteAsync(id, request?.PaidAt, userId, cancellationToken);
             return result.ToResponse(Results.Ok);
         })
         .WithName("ConfirmTransaction")
-        .WithSummary("Confirma uma transação pendente")
+        .WithSummary("Confirma uma transação pendente. PaidAt opcional — omitir usa a data atual.")
         .Produces<TransactionResponse>()
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound)

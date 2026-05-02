@@ -46,9 +46,13 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 
         builder.Property(t => t.RecurrenceEndDate);
 
+        builder.Property(t => t.DueDate);
+
         builder.Property(t => t.IsConfirmed)
             .HasDefaultValue(false)
             .IsRequired();
+
+        builder.Property(t => t.PaidAt);
 
         builder.Property(t => t.PaymentMethod)
             .HasConversion<string>()
@@ -90,6 +94,10 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 
             t.HasCheckConstraint("ck_transactions_payment_method",
                 "payment_method IN ('Pix', 'CreditCard', 'DebitCard', 'Cash', 'Ted', 'Boleto', 'Other') OR payment_method IS NULL");
+
+            // transação confirmada deve ter data de pagamento registrada
+            t.HasCheckConstraint("ck_transactions_paid_at",
+                "is_confirmed = false OR paid_at IS NOT NULL");
         });
 
         // ----- Indexes -----

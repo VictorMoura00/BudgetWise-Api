@@ -56,7 +56,7 @@ public sealed class DomainEventDispatcherInterceptorTests
         _bus.ClearReceivedCalls();
 
         // Confirm raises a second event (TransactionConfirmedEvent)
-        transaction.Confirm();
+        transaction.Confirm(Today);
         await ctx.SaveChangesAsync();
 
         await _bus.Received(1).PublishAsync(Arg.Any<TransactionConfirmedEvent>());

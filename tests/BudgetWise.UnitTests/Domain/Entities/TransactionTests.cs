@@ -107,13 +107,25 @@ public sealed class TransactionTests
     }
 
     [Fact]
-    public void Confirm_WhenNotDeleted_ShouldSetIsConfirmedTrue()
+    public void Confirm_WhenNotDeleted_ShouldSetIsConfirmedTrueAndPaidAt()
     {
         var transaction = Transaction.Create(UserId, "Compra", 100m, TransactionType.Expense, Today);
 
-        transaction.Confirm();
+        transaction.Confirm(Today);
 
         transaction.IsConfirmed.Should().BeTrue();
+        transaction.PaidAt.Should().Be(Today);
+    }
+
+    [Fact]
+    public void Confirm_WithCustomPaidAt_ShouldUseThatDate()
+    {
+        var transaction = Transaction.Create(UserId, "Compra", 100m, TransactionType.Expense, Today);
+        var dataPagamento = Today.AddDays(-2);
+
+        transaction.Confirm(dataPagamento);
+
+        transaction.PaidAt.Should().Be(dataPagamento);
     }
 
     [Fact]
@@ -122,7 +134,7 @@ public sealed class TransactionTests
         var transaction = Transaction.Create(UserId, "Compra", 100m, TransactionType.Expense, Today);
         transaction.SoftDelete();
 
-        var act = () => transaction.Confirm();
+        var act = () => transaction.Confirm(Today);
 
         act.Should().Throw<DomainException>()
             .WithMessage("*deleted*");
@@ -170,8 +182,45 @@ public sealed class TransactionTests
     {
         var transaction = Transaction.Create(UserId, "Compra", 100m, TransactionType.Expense, Today, isConfirmed: true);
 
-        transaction.Confirm();
+        transaction.Confirm(Today);
 
         transaction.IsConfirmed.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Create_WithDueDate_ShouldSetDueDate()
+    {
+        var vencimento = Today.AddDays(10);
+
+        var transaction = Transaction.Create(UserId, "Aluguel", 1200m, TransactionType.Expense, Today,
+            dueDate: vencimento);
+
+        transaction.DueDate.Should().Be(vencimento);
+    }
+
+    [Fact]
+    public void Create_WithoutDueDate_ShouldHaveNullDueDate()
+    {
+        var transaction = Transaction.Create(UserId, "Compra", 100m, TransactionType.Expense, Today);
+
+        transaction.DueDate.Should().BeNull();
+    }
+
+    [Fact]
+    public void Create_WhenConfirmed_ShouldSetPaidAtToTransactionDate()
+    {
+        var transaction = Transaction.Create(UserId, "Salário", 5000m, TransactionType.Income, Today,
+            isConfirmed: true);
+
+        transaction.PaidAt.Should().Be(Today);
+    }
+
+    [Fact]
+    public void Create_WhenNotConfirmed_ShouldHaveNullPaidAt()
+    {
+        var transaction = Transaction.Create(UserId, "Aluguel", 1200m, TransactionType.Expense, Today,
+            isConfirmed: false);
+
+        transaction.PaidAt.Should().BeNull();
     }
 }

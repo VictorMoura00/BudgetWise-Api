@@ -71,7 +71,7 @@ public sealed class DomainEventDispatchFlowTests
         _bus.ClearReceivedCalls();
 
         // Act
-        transaction.Confirm();
+        transaction.Confirm(Today);
         await ctx.SaveChangesAsync();
 
         // Assert
@@ -119,7 +119,7 @@ public sealed class DomainEventDispatchFlowTests
         _bus.ClearReceivedCalls();
 
         // Save 2: TransactionConfirmedEvent
-        transaction.Confirm();
+        transaction.Confirm(Today);
         await ctx.SaveChangesAsync();
         await _bus.Received(1).PublishAsync(Arg.Any<TransactionConfirmedEvent>());
         _bus.ClearReceivedCalls();

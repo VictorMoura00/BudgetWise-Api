@@ -42,7 +42,7 @@ public sealed class DomainEventsTests
         var transaction = Transaction.Create(UserId, "Aluguel", 1200m, TransactionType.Expense, Today);
         transaction.PopDomainEvents();
 
-        transaction.Confirm();
+        transaction.Confirm(Today);
 
         transaction.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<TransactionConfirmedEvent>();

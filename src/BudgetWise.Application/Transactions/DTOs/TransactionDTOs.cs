@@ -11,6 +11,7 @@ public sealed record TransactionResponse(
     decimal Amount,
     TransactionType Type,
     DateOnly TransactionDate,
+    DateOnly? DueDate,
     Guid? CategoryId,
     string? CategoryName,
     string? CategoryColor,
@@ -18,6 +19,7 @@ public sealed record TransactionResponse(
     RecurrenceType RecurrenceType,
     DateOnly? RecurrenceEndDate,
     bool IsConfirmed,
+    DateOnly? PaidAt,
     PaymentMethod? PaymentMethod,
     Guid? FamilyGroupId,
     DateTime CreatedAt,
@@ -36,7 +38,8 @@ public sealed record CreateTransactionRequest(
     DateOnly? RecurrenceEndDate,
     bool IsConfirmed,
     PaymentMethod? PaymentMethod,
-    Guid? FamilyGroupId
+    Guid? FamilyGroupId,
+    DateOnly? DueDate = null
 );
 
 public sealed record UpdateTransactionRequest(
@@ -49,8 +52,11 @@ public sealed record UpdateTransactionRequest(
     RecurrenceType RecurrenceType,
     DateOnly? RecurrenceEndDate,
     PaymentMethod? PaymentMethod,
-    Guid? FamilyGroupId
+    Guid? FamilyGroupId,
+    DateOnly? DueDate = null
 );
+
+public sealed record ConfirmTransactionRequest(DateOnly? PaidAt = null);
 
 public sealed record GetTransactionsRequest(
     int PageNumber = 1,

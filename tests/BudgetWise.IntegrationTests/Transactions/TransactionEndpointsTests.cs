@@ -232,7 +232,7 @@ public sealed class TransactionEndpointsTests(BudgetWiseWebFactory factory)
     // ── PATCH /transactions/{id}/confirm ──────────────────────────────────────
 
     [Fact]
-    public async Task Confirm_WhenPending_Returns200WithIsConfirmedTrue()
+    public async Task Confirm_WhenPending_Returns200WithIsConfirmedTrueAndPaidAt()
     {
         var token = await AuthenticateAsync();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -246,6 +246,27 @@ public sealed class TransactionEndpointsTests(BudgetWiseWebFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(JsonOptions);
         body!.IsConfirmed.Should().BeTrue();
+        body.PaidAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Confirm_WithExplicitPaidAt_ReturnsProvidedDate()
+    {
+        var token = await AuthenticateAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var createResponse = await _client.PostAsJsonAsync("/api/v1/transactions",
+            ValidCreateRequest(isConfirmed: false));
+        var created = await createResponse.Content.ReadFromJsonAsync<TransactionResponse>(JsonOptions);
+
+        var dataPagamento = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-5);
+        var confirmRequest = new { PaidAt = dataPagamento.ToString("yyyy-MM-dd") };
+        var response = await _client.PatchAsJsonAsync(
+            $"/api/v1/transactions/{created!.Id}/confirm", confirmRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(JsonOptions);
+        body!.PaidAt.Should().Be(dataPagamento);
     }
 
     [Fact]

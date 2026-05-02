@@ -29,18 +29,19 @@ public sealed class CreateTransactionUseCase(
             request.RecurrenceEndDate,
             request.IsConfirmed,
             request.PaymentMethod,
-            request.FamilyGroupId);
+            request.FamilyGroupId,
+            request.DueDate);
 
         await repository.AddAsync(transaction, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
 
         return new TransactionResponse(
             transaction.Id, transaction.UserId, transaction.Description, transaction.Amount,
-            transaction.Type, transaction.TransactionDate, transaction.CategoryId,
-            null, null,
+            transaction.Type, transaction.TransactionDate, transaction.DueDate,
+            transaction.CategoryId, null, null,
             transaction.Notes, transaction.RecurrenceType, transaction.RecurrenceEndDate,
-            transaction.IsConfirmed, transaction.PaymentMethod, transaction.FamilyGroupId,
-            transaction.CreatedAt, transaction.UpdatedAt,
+            transaction.IsConfirmed, transaction.PaidAt, transaction.PaymentMethod,
+            transaction.FamilyGroupId, transaction.CreatedAt, transaction.UpdatedAt,
             []);
     }
 }

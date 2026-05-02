@@ -10,10 +10,12 @@ namespace BudgetWise.Application.Transactions.UseCases;
 
 public sealed class ConfirmTransactionUseCase(
     ITransactionRepository repository,
-    IUnitOfWork unitOfWork) : IUseCase
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider) : IUseCase
 {
     public async Task<Result<TransactionResponse>> ExecuteAsync(
         Guid id,
+        DateOnly? paidAt,
         Guid userId,
         CancellationToken cancellationToken = default)
     {
@@ -25,7 +27,8 @@ public sealed class ConfirmTransactionUseCase(
         if (transaction.IsConfirmed)
             return TransactionErrors.AlreadyConfirmed;
 
-        transaction.Confirm();
+        var dataPagamento = paidAt ?? DateOnly.FromDateTime(timeProvider.GetUtcNow().DateTime);
+        transaction.Confirm(dataPagamento);
 
         await repository.UpdateAsync(transaction, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
@@ -37,10 +40,10 @@ public sealed class ConfirmTransactionUseCase(
 
         return new TransactionResponse(
             transaction.Id, transaction.UserId, transaction.Description, transaction.Amount,
-            transaction.Type, transaction.TransactionDate, transaction.CategoryId,
-            transaction.Category?.Name, transaction.Category?.Color,
+            transaction.Type, transaction.TransactionDate, transaction.DueDate,
+            transaction.CategoryId, transaction.Category?.Name, transaction.Category?.Color,
             transaction.Notes, transaction.RecurrenceType, transaction.RecurrenceEndDate,
-            transaction.IsConfirmed, transaction.PaymentMethod, transaction.FamilyGroupId,
-            transaction.CreatedAt, transaction.UpdatedAt, tags);
+            transaction.IsConfirmed, transaction.PaidAt, transaction.PaymentMethod,
+            transaction.FamilyGroupId, transaction.CreatedAt, transaction.UpdatedAt, tags);
     }
 }

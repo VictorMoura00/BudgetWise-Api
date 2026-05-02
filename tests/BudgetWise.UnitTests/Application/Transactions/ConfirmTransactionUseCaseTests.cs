@@ -12,14 +12,16 @@ public sealed class ConfirmTransactionUseCaseTests
 {
     private readonly ITransactionRepository _repository = Substitute.For<ITransactionRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly TimeProvider _timeProvider = Substitute.For<TimeProvider>();
     private readonly ConfirmTransactionUseCase _sut;
 
     private static readonly Guid UserId = Guid.NewGuid();
-    private static readonly DateOnly Today = DateOnly.FromDateTime(DateTime.UtcNow);
+    private static readonly DateOnly Today = new(2026, 5, 2);
 
     public ConfirmTransactionUseCaseTests()
     {
-        _sut = new ConfirmTransactionUseCase(_repository, _unitOfWork);
+        _timeProvider.GetUtcNow().Returns(new DateTimeOffset(2026, 5, 2, 0, 0, 0, TimeSpan.Zero));
+        _sut = new ConfirmTransactionUseCase(_repository, _unitOfWork, _timeProvider);
     }
 
     [Fact]
@@ -29,11 +31,38 @@ public sealed class ConfirmTransactionUseCaseTests
         _repository.GetByIdForUserAsync(transaction.Id, UserId, Arg.Any<CancellationToken>())
             .Returns(transaction);
 
-        var result = await _sut.ExecuteAsync(transaction.Id, UserId);
+        var result = await _sut.ExecuteAsync(transaction.Id, null, UserId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.IsConfirmed.Should().BeTrue();
         await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPaidAtNotProvided_UsesTodayFromTimeProvider()
+    {
+        var transaction = Transaction.Create(UserId, "Aluguel", 1200m, TransactionType.Expense, Today, isConfirmed: false);
+        _repository.GetByIdForUserAsync(transaction.Id, UserId, Arg.Any<CancellationToken>())
+            .Returns(transaction);
+
+        var result = await _sut.ExecuteAsync(transaction.Id, null, UserId);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.PaidAt.Should().Be(Today);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPaidAtProvided_UsesProvidedDate()
+    {
+        var transaction = Transaction.Create(UserId, "Fatura", 800m, TransactionType.Expense, Today, isConfirmed: false);
+        _repository.GetByIdForUserAsync(transaction.Id, UserId, Arg.Any<CancellationToken>())
+            .Returns(transaction);
+
+        var dataPagamento = Today.AddDays(-3);
+        var result = await _sut.ExecuteAsync(transaction.Id, dataPagamento, UserId);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.PaidAt.Should().Be(dataPagamento);
     }
 
     [Fact]
@@ -43,7 +72,7 @@ public sealed class ConfirmTransactionUseCaseTests
         _repository.GetByIdForUserAsync(transaction.Id, UserId, Arg.Any<CancellationToken>())
             .Returns(transaction);
 
-        var result = await _sut.ExecuteAsync(transaction.Id, UserId);
+        var result = await _sut.ExecuteAsync(transaction.Id, null, UserId);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("Transaction.AlreadyConfirmed");
@@ -57,7 +86,7 @@ public sealed class ConfirmTransactionUseCaseTests
         _repository.GetByIdForUserAsync(id, UserId, Arg.Any<CancellationToken>())
             .Returns((Transaction?)null);
 
-        var result = await _sut.ExecuteAsync(id, UserId);
+        var result = await _sut.ExecuteAsync(id, null, UserId);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("Transaction.NotFound");

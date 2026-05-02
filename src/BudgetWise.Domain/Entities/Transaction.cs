@@ -17,7 +17,9 @@ public class Transaction : Entity, ISoftDeletable, IAggregateRoot
     public string? Notes { get; private set; }
     public RecurrenceType RecurrenceType { get; private set; } = RecurrenceType.None;
     public DateOnly? RecurrenceEndDate { get; private set; }
+    public DateOnly? DueDate { get; private set; }
     public bool IsConfirmed { get; private set; }
+    public DateOnly? PaidAt { get; private set; }
     public PaymentMethod? PaymentMethod { get; private set; }
     public DateTime? DeletedAt { get; private set; }
     public Category? Category { get; private init; }
@@ -39,7 +41,8 @@ public class Transaction : Entity, ISoftDeletable, IAggregateRoot
         DateOnly? recurrenceEndDate = null,
         bool isConfirmed = false,
         PaymentMethod? paymentMethod = null,
-        Guid? familyGroupId = null)
+        Guid? familyGroupId = null,
+        DateOnly? dueDate = null)
     {
         if (string.IsNullOrWhiteSpace(description))
             throw new DomainException("Transaction description cannot be empty.");
@@ -59,8 +62,10 @@ public class Transaction : Entity, ISoftDeletable, IAggregateRoot
             RecurrenceType = recurrenceType,
             RecurrenceEndDate = recurrenceEndDate,
             IsConfirmed = isConfirmed,
+            PaidAt = isConfirmed ? transactionDate : null,
             PaymentMethod = paymentMethod,
-            FamilyGroupId = familyGroupId
+            FamilyGroupId = familyGroupId,
+            DueDate = dueDate
         };
 
         transaction.Raise(new TransactionCreatedEvent(
@@ -79,7 +84,8 @@ public class Transaction : Entity, ISoftDeletable, IAggregateRoot
         RecurrenceType recurrenceType,
         DateOnly? recurrenceEndDate,
         PaymentMethod? paymentMethod,
-        Guid? familyGroupId)
+        Guid? familyGroupId,
+        DateOnly? dueDate = null)
     {
         if (IsDeleted)
             throw new DomainException("It is not possible to edit a deleted transaction.");
@@ -100,15 +106,17 @@ public class Transaction : Entity, ISoftDeletable, IAggregateRoot
         RecurrenceEndDate = recurrenceEndDate;
         PaymentMethod = paymentMethod;
         FamilyGroupId = familyGroupId;
+        DueDate = dueDate;
         SetUpdated();
     }
 
-    public void Confirm()
+    public void Confirm(DateOnly paidAt)
     {
         if (IsDeleted)
             throw new DomainException("It is not possible to confirm a deleted transaction.");
 
         IsConfirmed = true;
+        PaidAt = paidAt;
         SetUpdated();
 
         Raise(new TransactionConfirmedEvent(Id, UserId));
