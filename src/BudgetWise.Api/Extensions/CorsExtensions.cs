@@ -1,26 +1,24 @@
-﻿namespace BudgetWise.Api.Extensions;
+namespace BudgetWise.Api.Extensions;
 
 public static class CorsExtensions
 {
-    private const string DevPolicyName = "AllowAll";
-    private const string ProdPolicyName = "AllowFrontend";
+    private const string PolicyName = "DefaultCors";
 
-    public static IServiceCollection AddCorsPolicy(this IServiceCollection services, IWebHostEnvironment environment)
+    public static IServiceCollection AddCorsPolicy(this IServiceCollection services, IConfiguration configuration)
     {
+        var origensPermitidas = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+        if (origensPermitidas.Length == 0)
+        {
+            return services;
+        }
+
         services.AddCors(options =>
         {
-            options.AddPolicy(DevPolicyName, builder =>
+            options.AddPolicy(PolicyName, builder =>
             {
                 builder
-                    .AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader();
-            });
-
-            options.AddPolicy(ProdPolicyName, builder =>
-            {
-                builder
-                    .WithOrigins("https://budgetwise.app")
+                    .WithOrigins(origensPermitidas)
                     .AllowAnyMethod()
                     .AllowAnyHeader();
             });
@@ -31,11 +29,12 @@ public static class CorsExtensions
 
     public static WebApplication UseCorsPolicy(this WebApplication app)
     {
-        var policyName = app.Environment.IsDevelopment()
-            ? DevPolicyName
-            : ProdPolicyName;
+        var origensPermitidas = app.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
-        app.UseCors(policyName);
+        if (origensPermitidas.Length > 0)
+        {
+            app.UseCors(PolicyName);
+        }
 
         return app;
     }
