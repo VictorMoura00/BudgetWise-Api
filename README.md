@@ -86,7 +86,7 @@ O projeto serve como portfólio técnico demonstrando domínio de **Clean Archit
 | Identidade | ASP.NET Core Identity | Gerenciamento de usuários |
 | Auth | JWT Bearer | Autenticação stateless |
 | Validação | FluentValidation | Validação de DTOs |
-| Mapeamento | Mapster | Mapeamento de objetos |
+| Mapeamento | Mapster | Mapeamento de objetos (instalado, uso manual/DTOs) |
 | Logging | Serilog + Seq | Logging estruturado |
 | Documentação | Scalar | OpenAPI UI interativo |
 | Testes | xUnit + Testcontainers | Testes de integração com PostgreSQL real |
@@ -157,22 +157,34 @@ Base URL: `/api/v1`
 | **Transações** | GET | `/transactions` |
 | | GET | `/transactions/{id}` |
 | | GET | `/transactions/summary` |
+| | GET | `/transactions/dashboard` |
+| | GET | `/transactions/monthly-summary` |
 | | POST | `/transactions` |
-| | PATCH | `/transactions/{id}` |
+| | PUT | `/transactions/{id}` |
 | | PATCH | `/transactions/{id}/confirm` |
 | | DELETE | `/transactions/{id}` |
+| | POST | `/transactions/{id}/tags/{tagId}` |
+| | DELETE | `/transactions/{id}/tags/{tagId}` |
 | **Grupos Familiares** | GET | `/family-groups` |
 | | GET | `/family-groups/{id}` |
 | | POST | `/family-groups` |
+| | PUT | `/family-groups/{id}` |
+| | DELETE | `/family-groups/{id}` |
 | | POST | `/family-groups/join` |
-| | POST | `/family-groups/{id}/regenerate-invite` |
+| | POST | `/family-groups/{id}/invite/regenerate` |
 | | DELETE | `/family-groups/{id}/members/{userId}` |
-| | DELETE | `/family-groups/{id}/leave` |
-| **Despesas Compartilhadas** | GET | `/family-groups/{id}/shared-expenses` |
+| | POST | `/family-groups/{id}/leave` |
+| **Despesas Compartilhadas** *(roadmap)* | GET | `/family-groups/{id}/shared-expenses` |
 | | GET | `/shared-expenses/{id}` |
 | | POST | `/family-groups/{id}/shared-expenses` |
 | | PATCH | `/shared-expenses/{id}/settle` |
 | | DELETE | `/shared-expenses/{id}` |
+| **Admin** | GET | `/admin/users` |
+| | GET | `/admin/users/{id}` |
+| | PATCH | `/admin/users/{id}` |
+| | PATCH | `/admin/users/{id}/toggle-status` |
+| | PATCH | `/admin/users/{id}/unlock` |
+| | PATCH | `/admin/users/{id}/role` |
 | **Utilitários** | GET | `/health` |
 | | GET | `/health/live` |
 | | GET | `/health/ready` |
@@ -238,11 +250,33 @@ dotnet run --project src/BudgetWise.Api
   },
   "Seq": {
     "ServerUrl": "http://localhost:5341"
+  },
+  "Cors": {
+    "AllowedOrigins": [
+      "http://localhost:4200",
+      "https://budgetwise.app"
+    ]
+  },
+  "RateLimit": {
+    "Auth": {
+      "LoginPermitLimit": 5,
+      "LoginWindowMinutes": 1,
+      "RefreshPermitLimit": 10,
+      "RefreshWindowMinutes": 1,
+      "RegisterPermitLimit": 5,
+      "RegisterWindowMinutes": 1
+    }
   }
 }
 ```
 
 `appsettings.json` contém apenas a estrutura com valores vazios (versionado). Valores reais ficam em `appsettings.Development.json` (no `.gitignore`).
+
+> **CORS:** se `Cors:AllowedOrigins` estiver vazio ou ausente, o middleware CORS não é registrado e requisições cross-origin serão bloqueadas pelo navegador.
+
+### Rate Limiting
+
+Os endpoints de autenticação (`/auth/register`, `/auth/login`, `/auth/refresh`) possuem rate limiting por IP utilizando `FixedWindowLimiter`. Os limites são configuráveis via `appsettings.json` na seção `RateLimit:Auth`. Em ambiente de testes os limites são ilimitados via `WebApplicationFactory`.
 
 ---
 
@@ -262,6 +296,12 @@ dotnet test tests/BudgetWise.IntegrationTests
 - **Unitários** — xUnit + Moq + Bogus. Sem banco, sem HTTP.
 - **Integração** — Testcontainers.PostgreSql + WebApplicationFactory. PostgreSQL efêmero por test run.
 - **Convenção de nome**: `Método_Cenário_ResultadoEsperado`
+
+> **Cobertura atual (338 testes):**
+> - 225 testes unitários
+> - 113 testes de integração cobrindo: Auth, Categories, Tags, Transactions, Family Groups, Admin, Health Checks
+>
+> **Pendente:** Shared Expenses.
 
 ---
 
@@ -333,12 +373,17 @@ Todos os logs são emitidos em JSON estruturado e enviados ao Seq. São registra
 - [x] Fluent API configurations + migrations
 - [x] Use Cases de Auth (registro, login, refresh token)
 - [x] Use Cases de Transações, Categorias, Tags
-- [x] Testes unitários e de integração
-- [ ] Seed de categorias do sistema
-- [ ] Pipeline CI com GitHub Actions
+- [x] Testes unitários e de integração (Auth, Categories, Tags, Transactions, Family Groups, Admin)
+- [x] Seed de categorias do sistema
+- [x] Pipeline CI com GitHub Actions
+- [x] Rate limiting nos endpoints de Auth
+- [x] CORS configurável via `appsettings.json`
+- [x] Serilog request logging com enriquecimento de contexto
 
 ### v2.0 — Dashboards e relatórios
-- [ ] Resumo financeiro por período (receitas, despesas, saldo)
+- [x] Resumo financeiro por período (`/transactions/summary`)
+- [x] Dashboard consolidado (`/transactions/dashboard`)
+- [x] Evolução mensal (`/transactions/monthly-summary`)
 - [ ] Relatório de gastos por categoria
 - [ ] Relatório de gastos por tag
 - [ ] Importação de extratos bancários (OFX/CSV)
@@ -347,8 +392,10 @@ Todos os logs são emitidos em JSON estruturado e enviados ao Seq. São registra
 
 ### v3.0 — Uso compartilhado
 - [x] Grupos Familiares (criação, convite, gerenciamento de membros)
-- [ ] Despesas Compartilhadas (divisão e quitação entre membros)
-- [ ] Testes de integração para Grupos Familiares e Despesas Compartilhadas
+- [~] Despesas Compartilhadas — entidades de domínio modeladas; use cases e endpoints pendentes
+- [x] Testes de integração para Grupos Familiares
+- [x] Testes de integração para Admin endpoints
+- [ ] Testes de integração para Despesas Compartilhadas
 
 ---
 

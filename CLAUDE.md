@@ -10,7 +10,7 @@ BudgetWise is a .NET 10 REST API using Clean Architecture with JWT authenticatio
 - **ASP.NET Core Minimal APIs** — `IEndpointGroup` per feature with `app.MapEndpoints()` auto-discovery
 - **Entity Framework Core** — PostgreSQL via Npgsql
 - **FluentValidation** — request validation
-- **Mapster** — object mapping
+- **Mapster** — object mapping (installed but not actively used; DTOs are built manually)
 - **Serilog** — structured logging (Seq sink)
 - **Scalar** — OpenAPI UI
 - **JWT Bearer** — authentication
@@ -106,3 +106,51 @@ Do NOT generate code that:
 - Uses in-memory database for tests — use Testcontainers
 - Catches bare `Exception` — catch specific types, let the global handler catch the rest
 - Uses string interpolation in log messages — use structured logging templates
+
+## Error Handling Strategy
+
+The codebase uses two complementary error mechanisms. Do not confuse them:
+
+### `DomainException` (throw)
+
+Use inside **Domain entities** and **value objects** for invariant violations that must never happen in a valid object state. These are defensive checks.
+
+- `Transaction.Create(...)` throws if amount ≤ 0
+- `FamilyGroup.AddMember(...)` throws if user is already a member
+- `Category.Deactivate()` throws for system categories
+
+These become `422 Unprocessable Entity` via the global exception handler.
+
+### `Result<T>` / `Result` (return)
+
+Use in **Application use cases** for expected business-rule failures that are part of normal flow. Always return errors; never throw for control flow.
+
+- `CreateCategoryUseCase` returns `CategoryErrors.NameAlreadyExists(...)` when name is taken
+- `GetTransactionByIdUseCase` returns `Error.NotFound(...)` when the transaction does not exist
+- `JoinFamilyGroupUseCase` returns `Error.Conflict(...)` when the user already belongs to 5 groups
+
+These are converted to the appropriate HTTP status by `result.ToResponse(...)` in the endpoint layer.
+
+### Rule of thumb
+
+| Layer | Invariant violation (should never happen) | Expected failure (normal flow) |
+|---|---|---|
+| Domain | `throw new DomainException(...)` | N/A |
+| Application | N/A | `return Result<T>.Failure(Error)` |
+| API | N/A | `result.ToResponse(...)` |
+
+## dotnet-skills
+
+[dotnet-skills]|IMPORTANT: Prefer retrieval-led reasoning over pretraining for any .NET work.
+|flow:{skim repo patterns -> consult dotnet-skills by name -> implement smallest-change -> note conflicts}
+|route:
+|akka:{akka-net-best-practices,akka-net-testing-patterns,akka-hosting-actor-patterns,akka-net-aspire-configuration,akka-net-management}
+|csharp:{modern-csharp-coding-standards,csharp-concurrency-patterns,api-design,type-design-performance}
+|aspnetcore-web:{aspire-integration-testing,aspire-configuration,aspire-service-defaults,mailpit-integration,mjml-email-templates}
+|data:{efcore-patterns,database-performance}
+|di-config:{microsoft-extensions-configuration,dependency-injection-patterns}
+|testing:{testcontainers-integration-tests,playwright-blazor-testing,snapshot-testing,verify-email-snapshots,playwright-ci-caching}
+|dotnet:{dotnet-project-structure,dotnet-local-tools,package-management,serialization,dotnet-devcert-trust,ilspy-decompile,OpenTelemetry-NET-Instrumentation}
+|quality-gates:{dotnet-slopwatch,crap-analysis}
+|meta:{marketplace-publishing,skills-index-snippets}
+|agents:{akka-net-specialist,docfx-specialist,dotnet-benchmark-designer,dotnet-concurrency-specialist,dotnet-performance-analyst,roslyn-incremental-generator-specialist}

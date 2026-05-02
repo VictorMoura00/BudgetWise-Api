@@ -44,18 +44,20 @@
 ---
 
 ## 👨‍👩‍👧 Grupos Familiares
-- 🔲 `GET /family-groups` — Listar grupos do usuário
-- 🔲 `GET /family-groups/{id}` — Detalhe + membros
-- 🔲 `POST /family-groups` — Criar grupo
-- 🔲 `PUT /family-groups/{id}` — Atualizar nome/descrição
-- 🔲 `DELETE /family-groups/{id}` — Excluir grupo
-- 🔲 `POST /family-groups/join` — Entrar via invite code
-- 🔲 `DELETE /family-groups/{id}/members/{userId}` — Remover membro
-- 🔲 `POST /family-groups/{id}/invite` — Regenerar invite code
+- ✅ `GET /family-groups` — Listar grupos do usuário
+- ✅ `GET /family-groups/{id}` — Detalhe + membros
+- ✅ `POST /family-groups` — Criar grupo
+- ✅ `PUT /family-groups/{id}` — Atualizar nome/descrição
+- ✅ `DELETE /family-groups/{id}` — Excluir grupo
+- ✅ `POST /family-groups/join` — Entrar via invite code
+- ✅ `DELETE /family-groups/{id}/members/{userId}` — Remover membro
+- ✅ `POST /family-groups/{id}/invite/regenerate` — Regenerar invite code
+- ✅ `POST /family-groups/{id}/leave` — Sair do grupo
 
 ---
 
 ## 💰 Despesas Compartilhadas
+- ✅ Entidades de domínio modeladas (`SharedExpense`, `SharedExpenseParticipant`)
 - 🔲 `GET /shared-expenses` — Listar despesas do grupo
 - 🔲 `GET /shared-expenses/{id}` — Detalhe + participantes
 - 🔲 `POST /shared-expenses` — Criar despesa compartilhada
@@ -66,8 +68,8 @@
 ---
 
 ## ⚡ Domain Events / Background Logic
-- 🔲 `TransactionCreatedHandler` — Recalcular saldo, verificar limite de gastos
-- 🔲 `TransactionConfirmedHandler` — Notificações, atualizar cache
+- ✅ `TransactionCreatedHandler` — Recalcular saldo, verificar limite de gastos
+- ✅ `TransactionConfirmedHandler` — Notificações, atualizar cache
 - 🔲 `FamilyMemberJoinedHandler` — Notificar grupo
 - 🔲 `FamilyMemberRemovedHandler` — Limpeza de dados
 - 🔲 `SharedExpenseFullySettledHandler` — Notificar criador da despesa
@@ -78,13 +80,15 @@
 - ✅ Unit tests — Domain (entities, value objects, events)
 - ✅ Unit tests — Application (Auth use cases)
 - ✅ Unit tests — Application (Transaction use cases)
+- ✅ Unit tests — Application (Family Group use cases)
 - ✅ Unit tests — Infrastructure (seeder, domain event dispatcher)
 - ✅ Unit tests — Architecture (dependency rules)
 - ✅ Integration tests — Auth endpoints
 - ✅ Integration tests — Transaction endpoints
-- 🔲 Integration tests — Category endpoints
+- ✅ Integration tests — Category endpoints
 - ✅ Integration tests — Tag endpoints
-- 🔲 Integration tests — Family Group endpoints
+- ✅ Integration tests — Family Group endpoints
+- ✅ Integration tests — Admin endpoints
 - 🔲 Integration tests — Shared Expense endpoints
 
 ---
@@ -98,6 +102,17 @@
 - ✅ Health check (Postgres)
 - ✅ OpenAPI (Scalar)
 - ✅ JWT com refresh token rotativo
-- 🔲 Rate limiting nos endpoints de auth
+- ✅ Pipeline CI/CD (GitHub Actions — build, test, format)
+- ✅ Rate limiting nos endpoints de auth
 - 🔲 Paginação por cursor (alternativa ao offset para grandes volumes)
-- 🔲 Endpoint de sumário financeiro (`GET /summary?month=2026-04`)
+- ✅ Endpoints de sumário financeiro (`GET /transactions/summary`, `/transactions/dashboard`, `/transactions/monthly-summary`)
+
+---
+
+## 🔧 Revisões Técnicas / Débito Técnico
+- 🔲 `PaginatedList<T>` — revisar desserialização com `System.Text.Json` (constructor parameters vs properties)
+- 🔲 `Repository<T>` — revisar métodos genéricos restantes (`GetByIdAsync`, `GetPaginatedAsync`, `DeleteAsync`)
+- 🔲 `ForwardedHeaders` — suporte a produção atrás de reverse proxy
+- 🔲 Filtro de logs para health checks (evitar poluição de log por requisições de readiness/liveness)
+- 🔲 `TimeProvider` — substituir `DateTime.UtcNow` por abstração de tempo injetável
+- 🔲 Testes de integração para Shared Expenses (use cases e endpoints ainda não implementados)
