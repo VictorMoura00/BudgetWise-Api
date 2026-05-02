@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Bogus;
 using BudgetWise.Application.Auth.Common;
 using BudgetWise.Application.Auth.DTOs;
+using BudgetWise.Application.Categories.DTOs;
 using BudgetWise.Application.Transactions.DTOs;
 using BudgetWise.Domain.Enums;
 using BudgetWise.IntegrationTests.Infrastructure;
@@ -49,6 +50,14 @@ public sealed class TransactionEndpointsTests(BudgetWiseWebFactory factory)
             IsConfirmed: isConfirmed,
             PaymentMethod: PaymentMethod.Pix,
             FamilyGroupId: null);
+
+    private async Task<CategoryResponse> CreateCategoryAsync(string token, CategoryType categoryType)
+    {
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await _client.PostAsJsonAsync("/api/v1/categories",
+            new CreateCategoryRequest(_faker.Commerce.Department(), null, null, null, categoryType));
+        return (await response.Content.ReadFromJsonAsync<CategoryResponse>(JsonOptions))!;
+    }
 
     // ── POST /transactions ────────────────────────────────────────────────────
 
@@ -324,5 +333,64 @@ public sealed class TransactionEndpointsTests(BudgetWiseWebFactory factory)
         var response = await _client.DeleteAsync($"/api/v1/transactions/{Guid.NewGuid()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // ── Category compatibility ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Create_WithIncompatibleCategory_Returns400()
+    {
+        var token = await AuthenticateAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var incomeCategory = await CreateCategoryAsync(token, CategoryType.Income);
+
+        var request = new CreateTransactionRequest(
+            _faker.Commerce.ProductName(), 100m, TransactionType.Expense,
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            incomeCategory.Id, null, RecurrenceType.None, null, false, null, null);
+
+        var response = await _client.PostAsJsonAsync("/api/v1/transactions", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Create_WithCompatibleBothCategory_Returns201()
+    {
+        var token = await AuthenticateAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var bothCategory = await CreateCategoryAsync(token, CategoryType.Both);
+
+        var request = new CreateTransactionRequest(
+            _faker.Commerce.ProductName(), 200m, TransactionType.Expense,
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            bothCategory.Id, null, RecurrenceType.None, null, false, null, null);
+
+        var response = await _client.PostAsJsonAsync("/api/v1/transactions", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task Update_WithIncompatibleCategory_Returns400()
+    {
+        var token = await AuthenticateAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var createResponse = await _client.PostAsJsonAsync("/api/v1/transactions", ValidCreateRequest(TransactionType.Income));
+        var created = await createResponse.Content.ReadFromJsonAsync<TransactionResponse>(JsonOptions);
+
+        var expenseCategory = await CreateCategoryAsync(token, CategoryType.Expense);
+
+        var updateRequest = new UpdateTransactionRequest(
+            created!.Description, created.Amount, TransactionType.Income,
+            created.TransactionDate,
+            expenseCategory.Id, null, RecurrenceType.None, null, null, null);
+
+        var response = await _client.PutAsJsonAsync($"/api/v1/transactions/{created.Id}", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

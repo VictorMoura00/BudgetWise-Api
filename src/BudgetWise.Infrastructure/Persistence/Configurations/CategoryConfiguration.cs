@@ -1,4 +1,5 @@
 using BudgetWise.Domain.Entities;
+using BudgetWise.Domain.Enums;
 using BudgetWise.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -51,6 +52,11 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 
         builder.Property(c => c.UpdatedAt)
             .HasDefaultValueSql("now()")
+            .IsRequired();
+
+        builder.Property(c => c.CategoryType)
+            .HasConversion<int>()
+            .HasDefaultValue(CategoryType.Both)
             .IsRequired();
 
         builder.Property(c => c.UserId);

@@ -1,4 +1,5 @@
 using BudgetWise.Domain.Entities;
+using BudgetWise.Domain.Enums;
 using BudgetWise.Domain.ValueObjects;
 using BudgetWise.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -24,20 +25,20 @@ public static class CategorySeeder
         var categories = new List<Category>
         {
             // Despesas
-            Category.CreateSystem("Alimentação",    icon: "utensils",          color: Color("#EF4444")),
-            Category.CreateSystem("Transporte",     icon: "car",               color: Color("#3B82F6")),
-            Category.CreateSystem("Moradia",        icon: "house",             color: Color("#8B5CF6")),
-            Category.CreateSystem("Saúde",          icon: "heart-pulse",       color: Color("#EC4899")),
-            Category.CreateSystem("Lazer",          icon: "tv-2",              color: Color("#F59E0B")),
-            Category.CreateSystem("Educação",       icon: "graduation-cap",    color: Color("#10B981")),
+            Category.CreateSystem("Alimentação",    CategoryType.Expense, icon: "utensils",          color: Color("#EF4444")),
+            Category.CreateSystem("Transporte",     CategoryType.Expense, icon: "car",               color: Color("#3B82F6")),
+            Category.CreateSystem("Moradia",        CategoryType.Expense, icon: "house",             color: Color("#8B5CF6")),
+            Category.CreateSystem("Saúde",          CategoryType.Expense, icon: "heart-pulse",       color: Color("#EC4899")),
+            Category.CreateSystem("Lazer",          CategoryType.Expense, icon: "tv-2",              color: Color("#F59E0B")),
+            Category.CreateSystem("Educação",       CategoryType.Expense, icon: "graduation-cap",    color: Color("#10B981")),
 
             // Receitas
-            Category.CreateSystem("Salário",        icon: "banknote",          color: Color("#22C55E")),
-            Category.CreateSystem("Freelance",      icon: "briefcase",         color: Color("#06B6D4")),
+            Category.CreateSystem("Salário",        CategoryType.Income,  icon: "banknote",          color: Color("#22C55E")),
+            Category.CreateSystem("Freelance",      CategoryType.Income,  icon: "briefcase",         color: Color("#06B6D4")),
 
             // Neutras
-            Category.CreateSystem("Investimento",   icon: "trending-up",       color: Color("#6366F1")),
-            Category.CreateSystem("Transferência",  icon: "arrow-left-right",  color: Color("#64748B")),
+            Category.CreateSystem("Investimento",   CategoryType.Both,    icon: "trending-up",       color: Color("#6366F1")),
+            Category.CreateSystem("Transferência",  CategoryType.Both,    icon: "arrow-left-right",  color: Color("#64748B")),
         };
 
         await context.Categories.AddRangeAsync(categories);

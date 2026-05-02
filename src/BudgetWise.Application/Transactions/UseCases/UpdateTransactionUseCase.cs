@@ -4,13 +4,15 @@ using BudgetWise.Application.Transactions.Common;
 using BudgetWise.Application.Transactions.DTOs;
 using BudgetWise.Domain.Common.Interfaces;
 using BudgetWise.Domain.Common.Results;
+using BudgetWise.Domain.Enums;
 using BudgetWise.Domain.Interfaces;
 
 namespace BudgetWise.Application.Transactions.UseCases;
 
 public sealed class UpdateTransactionUseCase(
     ITransactionRepository repository,
-    IUnitOfWork unitOfWork) : IUseCase
+    IUnitOfWork unitOfWork,
+    ICategoryRepository categoryRepository) : IUseCase
 {
     public async Task<Result<TransactionResponse>> ExecuteAsync(
         Guid id,
@@ -22,6 +24,15 @@ public sealed class UpdateTransactionUseCase(
 
         if (transaction is null)
             return TransactionErrors.NotFound(id);
+
+        if (request.CategoryId.HasValue)
+        {
+            var category = await categoryRepository.GetByIdForUserAsync(request.CategoryId.Value, userId, cancellationToken);
+            if (category is null)
+                return TransactionErrors.CategoryNotFound(request.CategoryId.Value);
+            if (!IsCategoryCompatible(category.CategoryType, request.Type))
+                return TransactionErrors.IncompatibleCategory(category.Name, request.Type.ToString());
+        }
 
         transaction.Update(
             request.Description,
@@ -52,4 +63,9 @@ public sealed class UpdateTransactionUseCase(
             transaction.IsConfirmed, transaction.PaidAt, transaction.PaymentMethod,
             transaction.FamilyGroupId, transaction.CreatedAt, transaction.UpdatedAt, tags);
     }
+
+    private static bool IsCategoryCompatible(CategoryType categoryType, TransactionType transactionType) =>
+        categoryType == CategoryType.Both ||
+        (categoryType == CategoryType.Expense && transactionType == TransactionType.Expense) ||
+        (categoryType == CategoryType.Income && transactionType == TransactionType.Income);
 }

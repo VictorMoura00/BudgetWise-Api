@@ -42,7 +42,7 @@ public sealed class UpdateCategoryUseCase(
             color = colorResult.Value;
         }
 
-        category.Update(request.Name, request.Description, request.Icon, color);
+        category.Update(request.Name, request.Description, request.Icon, color, request.CategoryType);
 
         await repository.UpdateAsync(category, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
@@ -50,6 +50,6 @@ public sealed class UpdateCategoryUseCase(
         return new CategoryResponse(
             category.Id, category.Name, category.Description, category.Icon,
             category.Color?.Value, category.IsSystem, category.IsActive,
-            category.UserId, category.CreatedAt, category.UpdatedAt);
+            category.CategoryType, category.UserId, category.CreatedAt, category.UpdatedAt);
     }
 }

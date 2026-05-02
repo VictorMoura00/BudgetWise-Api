@@ -1,4 +1,5 @@
 using BudgetWise.Domain.Entities;
+using BudgetWise.Domain.Enums;
 using BudgetWise.Infrastructure.Persistence;
 using BudgetWise.Infrastructure.Persistence.Interceptors;
 using BudgetWise.Infrastructure.Seeds;
@@ -79,6 +80,54 @@ public sealed class CategorySeederTests
         // Assert — idempotente: ainda 10
         var count = await context.Categories.CountAsync();
         count.Should().Be(10);
+    }
+
+    [Fact]
+    public async Task SeedAsync_ExpenseCategories_HaveCorrectCategoryType()
+    {
+        await using var context = CreateInMemoryContext();
+
+        await CategorySeeder.SeedAsync(context, NullLogger.Instance);
+
+        var expenseNames = new[] { "Alimentação", "Transporte", "Moradia", "Saúde", "Lazer", "Educação" };
+        var expenseCategories = await context.Categories
+            .Where(c => expenseNames.Contains(c.Name))
+            .ToListAsync();
+
+        expenseCategories.Should().HaveCount(6);
+        expenseCategories.Should().AllSatisfy(c => c.CategoryType.Should().Be(CategoryType.Expense));
+    }
+
+    [Fact]
+    public async Task SeedAsync_IncomeCategories_HaveCorrectCategoryType()
+    {
+        await using var context = CreateInMemoryContext();
+
+        await CategorySeeder.SeedAsync(context, NullLogger.Instance);
+
+        var incomeNames = new[] { "Salário", "Freelance" };
+        var incomeCategories = await context.Categories
+            .Where(c => incomeNames.Contains(c.Name))
+            .ToListAsync();
+
+        incomeCategories.Should().HaveCount(2);
+        incomeCategories.Should().AllSatisfy(c => c.CategoryType.Should().Be(CategoryType.Income));
+    }
+
+    [Fact]
+    public async Task SeedAsync_NeutralCategories_HaveBothCategoryType()
+    {
+        await using var context = CreateInMemoryContext();
+
+        await CategorySeeder.SeedAsync(context, NullLogger.Instance);
+
+        var bothNames = new[] { "Investimento", "Transferência" };
+        var bothCategories = await context.Categories
+            .Where(c => bothNames.Contains(c.Name))
+            .ToListAsync();
+
+        bothCategories.Should().HaveCount(2);
+        bothCategories.Should().AllSatisfy(c => c.CategoryType.Should().Be(CategoryType.Both));
     }
 
     [Fact]

@@ -15,4 +15,11 @@ public static class TransactionErrors
 
     public static Error AlreadyConfirmed =>
         Error.Validation("Transaction.AlreadyConfirmed", "A transação já está confirmada.");
+
+    public static Error CategoryNotFound(Guid id) =>
+        Error.NotFound("Transaction.CategoryNotFound", $"Categoria '{id}' não encontrada.");
+
+    public static Error IncompatibleCategory(string categoryName, string transactionType) =>
+        Error.Validation("Transaction.IncompatibleCategory",
+            $"A categoria '{categoryName}' não é compatível com transações do tipo '{transactionType}'.");
 }

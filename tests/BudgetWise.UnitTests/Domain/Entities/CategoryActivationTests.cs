@@ -34,7 +34,7 @@ public sealed class CategoryActivationTests
     [Fact]
     public void Activate_WhenSystem_ShouldThrowDomainException()
     {
-        var category = Category.CreateSystem("Alimentação");
+        var category = Category.CreateSystem("Alimentação", BudgetWise.Domain.Enums.CategoryType.Expense);
 
         var act = () => category.Activate();
 

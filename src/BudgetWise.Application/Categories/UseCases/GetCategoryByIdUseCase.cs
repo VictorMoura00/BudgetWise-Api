@@ -21,6 +21,6 @@ public sealed class GetCategoryByIdUseCase(ICategoryRepository repository) : IUs
         return new CategoryResponse(
             category.Id, category.Name, category.Description, category.Icon,
             category.Color?.Value, category.IsSystem, category.IsActive,
-            category.UserId, category.CreatedAt, category.UpdatedAt);
+            category.CategoryType, category.UserId, category.CreatedAt, category.UpdatedAt);
     }
 }

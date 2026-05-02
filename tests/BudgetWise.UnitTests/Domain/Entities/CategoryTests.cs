@@ -1,4 +1,5 @@
 using BudgetWise.Domain.Entities;
+using BudgetWise.Domain.Enums;
 using BudgetWise.Domain.Exceptions;
 using BudgetWise.Domain.ValueObjects;
 using FluentAssertions;
@@ -12,7 +13,7 @@ public sealed class CategoryTests
     [Fact]
     public void CreateSystem_ShouldSetIsSystemTrue_AndNullUserId()
     {
-        var category = Category.CreateSystem("Alimentação", icon: "🍔", description: "Gastos com comida");
+        var category = Category.CreateSystem("Alimentação", CategoryType.Expense, icon: "🍔", description: "Gastos com comida");
 
         category.Name.Should().Be("Alimentação");
         category.Icon.Should().Be("🍔");
@@ -26,11 +27,23 @@ public sealed class CategoryTests
     [Fact]
     public void CreateSystem_WithOnlyName_ShouldSetNullOptionals()
     {
-        var category = Category.CreateSystem("Transporte");
+        var category = Category.CreateSystem("Transporte", CategoryType.Expense);
 
         category.Icon.Should().BeNull();
         category.Description.Should().BeNull();
         category.Color.Should().BeNull();
+    }
+
+    [Fact]
+    public void CreateSystem_ShouldSetCategoryType()
+    {
+        var expense = Category.CreateSystem("Alimentação", CategoryType.Expense);
+        var income = Category.CreateSystem("Salário", CategoryType.Income);
+        var both = Category.CreateSystem("Investimento", CategoryType.Both);
+
+        expense.CategoryType.Should().Be(CategoryType.Expense);
+        income.CategoryType.Should().Be(CategoryType.Income);
+        both.CategoryType.Should().Be(CategoryType.Both);
     }
 
     [Fact]
@@ -49,18 +62,35 @@ public sealed class CategoryTests
     }
 
     [Fact]
+    public void CreatePersonal_WithoutCategoryType_DefaultsToBoth()
+    {
+        var category = Category.CreatePersonal(UserId, "Minha Categoria");
+
+        category.CategoryType.Should().Be(CategoryType.Both);
+    }
+
+    [Fact]
+    public void CreatePersonal_WithExplicitCategoryType_ShouldSetIt()
+    {
+        var category = Category.CreatePersonal(UserId, "Salário Extra", categoryType: CategoryType.Income);
+
+        category.CategoryType.Should().Be(CategoryType.Income);
+    }
+
+    [Fact]
     public void Update_ShouldChangeAllFields()
     {
         var category = Category.CreatePersonal(UserId, "Old");
         var newColor = HexColor.Create("#AABBCC").Value;
         var before = category.UpdatedAt;
 
-        category.Update("New", "Desc", "🆕", newColor);
+        category.Update("New", "Desc", "🆕", newColor, CategoryType.Expense);
 
         category.Name.Should().Be("New");
         category.Description.Should().Be("Desc");
         category.Icon.Should().Be("🆕");
         category.Color.Should().Be(newColor);
+        category.CategoryType.Should().Be(CategoryType.Expense);
         category.UpdatedAt.Should().BeOnOrAfter(before);
     }
 
@@ -69,11 +99,12 @@ public sealed class CategoryTests
     {
         var category = Category.CreatePersonal(UserId, "Old", "Desc", "🎮");
 
-        category.Update("New", null, null, null);
+        category.Update("New", null, null, null, CategoryType.Both);
 
         category.Description.Should().BeNull();
         category.Icon.Should().BeNull();
         category.Color.Should().BeNull();
+        category.CategoryType.Should().Be(CategoryType.Both);
     }
 
     [Fact]
@@ -89,7 +120,7 @@ public sealed class CategoryTests
     [Fact]
     public void Deactivate_WhenSystem_ShouldThrowDomainException()
     {
-        var category = Category.CreateSystem("Alimentação");
+        var category = Category.CreateSystem("Alimentação", CategoryType.Expense);
 
         var act = () => category.Deactivate();
 

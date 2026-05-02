@@ -21,7 +21,7 @@ public sealed class GetCategoriesUseCase(ICategoryRepository repository) : IUseC
         var response = paged.Map(c => new CategoryResponse(
             c.Id, c.Name, c.Description, c.Icon,
             c.Color?.Value, c.IsSystem, c.IsActive,
-            c.UserId, c.CreatedAt, c.UpdatedAt));
+            c.CategoryType, c.UserId, c.CreatedAt, c.UpdatedAt));
 
         return PaginatedCategoryResponse.FromPaginatedList(response);
     }

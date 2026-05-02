@@ -31,7 +31,7 @@ public sealed class CreateCategoryUseCase(
             color = colorResult.Value;
         }
 
-        var category = Category.CreatePersonal(userId, request.Name, request.Description, request.Icon, color);
+        var category = Category.CreatePersonal(userId, request.Name, request.Description, request.Icon, color, request.CategoryType);
 
         await repository.AddAsync(category, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
@@ -39,6 +39,6 @@ public sealed class CreateCategoryUseCase(
         return new CategoryResponse(
             category.Id, category.Name, category.Description, category.Icon,
             category.Color?.Value, category.IsSystem, category.IsActive,
-            category.UserId, category.CreatedAt, category.UpdatedAt);
+            category.CategoryType, category.UserId, category.CreatedAt, category.UpdatedAt);
     }
 }

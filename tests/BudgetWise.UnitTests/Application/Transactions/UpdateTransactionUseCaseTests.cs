@@ -13,6 +13,7 @@ public sealed class UpdateTransactionUseCaseTests
 {
     private readonly ITransactionRepository _repository = Substitute.For<ITransactionRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly ICategoryRepository _categoryRepository = Substitute.For<ICategoryRepository>();
     private readonly UpdateTransactionUseCase _sut;
 
     private static readonly Guid UserId = Guid.NewGuid();
@@ -20,7 +21,7 @@ public sealed class UpdateTransactionUseCaseTests
 
     public UpdateTransactionUseCaseTests()
     {
-        _sut = new UpdateTransactionUseCase(_repository, _unitOfWork);
+        _sut = new UpdateTransactionUseCase(_repository, _unitOfWork, _categoryRepository);
     }
 
     [Fact]
@@ -57,6 +58,51 @@ public sealed class UpdateTransactionUseCaseTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("Transaction.NotFound");
+        await _unitOfWork.DidNotReceive().CommitAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenCategoryIncompatible_ReturnsIncompatibleCategoryError()
+    {
+        var transaction = Transaction.Create(UserId, "Receita", 500m, TransactionType.Income, Today);
+        _repository.GetByIdForUserAsync(transaction.Id, UserId, Arg.Any<CancellationToken>())
+            .Returns(transaction);
+
+        var categoryId = Guid.NewGuid();
+        var expenseCategory = Category.CreatePersonal(UserId, "Alimentação", categoryType: CategoryType.Expense);
+        _categoryRepository.GetByIdForUserAsync(categoryId, UserId, Arg.Any<CancellationToken>())
+            .Returns(expenseCategory);
+
+        var request = new UpdateTransactionRequest(
+            "Teste", 500m, TransactionType.Income, Today,
+            categoryId, null, RecurrenceType.None, null, null, null);
+
+        var result = await _sut.ExecuteAsync(transaction.Id, request, UserId);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Transaction.IncompatibleCategory");
+        await _unitOfWork.DidNotReceive().CommitAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenCategoryNotFound_ReturnsCategoryNotFoundError()
+    {
+        var transaction = Transaction.Create(UserId, "Despesa", 300m, TransactionType.Expense, Today);
+        _repository.GetByIdForUserAsync(transaction.Id, UserId, Arg.Any<CancellationToken>())
+            .Returns(transaction);
+
+        var categoryId = Guid.NewGuid();
+        _categoryRepository.GetByIdForUserAsync(categoryId, UserId, Arg.Any<CancellationToken>())
+            .Returns((Category?)null);
+
+        var request = new UpdateTransactionRequest(
+            "Teste", 300m, TransactionType.Expense, Today,
+            categoryId, null, RecurrenceType.None, null, null, null);
+
+        var result = await _sut.ExecuteAsync(transaction.Id, request, UserId);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Transaction.CategoryNotFound");
         await _unitOfWork.DidNotReceive().CommitAsync(Arg.Any<CancellationToken>());
     }
 }

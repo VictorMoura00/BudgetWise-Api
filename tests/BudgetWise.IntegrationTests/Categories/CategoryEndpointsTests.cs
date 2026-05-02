@@ -7,6 +7,7 @@ using Bogus;
 using BudgetWise.Application.Auth.Common;
 using BudgetWise.Application.Auth.DTOs;
 using BudgetWise.Application.Categories.DTOs;
+using BudgetWise.Domain.Enums;
 using BudgetWise.IntegrationTests.Infrastructure;
 using FluentAssertions;
 
@@ -153,6 +154,7 @@ public sealed class CategoryEndpointsTests(BudgetWiseWebFactory factory)
         body!.Id.Should().NotBeEmpty();
         body.Name.Should().Be("moradia");
         body.IsSystem.Should().BeFalse();
+        body.CategoryType.Should().Be(CategoryType.Both);
     }
 
     [Fact]
@@ -281,5 +283,37 @@ public sealed class CategoryEndpointsTests(BudgetWiseWebFactory factory)
         var response = await _client.DeleteAsync($"/api/v1/categories/{Guid.NewGuid()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // ── CategoryType ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Create_WithExplicitCategoryType_PersistsAndReturnsCategoryType()
+    {
+        var token = await AuthenticateAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _client.PostAsJsonAsync("/api/v1/categories",
+            new CreateCategoryRequest("meu-salário", null, null, null, CategoryType.Income));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>(JsonOptions);
+        body!.CategoryType.Should().Be(CategoryType.Income);
+    }
+
+    [Fact]
+    public async Task GetList_SystemCategories_HaveCorrectCategoryType()
+    {
+        var token = await AuthenticateAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _client.GetAsync("/api/v1/categories?pageNumber=1&pageSize=20");
+
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadFromJsonAsync<PaginatedCategoryResponse>(JsonOptions);
+        var systemCategories = body!.Items.Where(c => c.IsSystem).ToList();
+        systemCategories.Should().NotBeEmpty();
+        systemCategories.Should().AllSatisfy(c =>
+            c.CategoryType.Should().BeOneOf(CategoryType.Expense, CategoryType.Income, CategoryType.Both));
     }
 }

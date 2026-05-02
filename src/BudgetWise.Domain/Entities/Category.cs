@@ -1,4 +1,5 @@
 using BudgetWise.Domain.Common.Abstractions;
+using BudgetWise.Domain.Enums;
 using BudgetWise.Domain.Exceptions;
 using BudgetWise.Domain.ValueObjects;
 
@@ -12,17 +13,24 @@ public class Category : Entity, IAggregateRoot
     public HexColor? Color { get; private set; }
     public bool IsSystem { get; private init; }
     public bool IsActive { get; private set; } = true;
+    public CategoryType CategoryType { get; private set; } = CategoryType.Both;
     public Guid? UserId { get; private init; }
 
     public ICollection<Transaction> Transactions { get; private init; } = [];
 
     private Category() { }
 
-    public static Category CreateSystem(string name, string? icon = null, HexColor? color = null, string? description = null)
+    public static Category CreateSystem(
+        string name,
+        CategoryType categoryType,
+        string? icon = null,
+        HexColor? color = null,
+        string? description = null)
     {
         return new Category
         {
             Name = name,
+            CategoryType = categoryType,
             Icon = icon,
             Color = color,
             Description = description,
@@ -31,7 +39,13 @@ public class Category : Entity, IAggregateRoot
         };
     }
 
-    public static Category CreatePersonal(Guid userId, string name, string? description = null, string? icon = null, HexColor? color = null)
+    public static Category CreatePersonal(
+        Guid userId,
+        string name,
+        string? description = null,
+        string? icon = null,
+        HexColor? color = null,
+        CategoryType categoryType = CategoryType.Both)
     {
         return new Category
         {
@@ -39,17 +53,19 @@ public class Category : Entity, IAggregateRoot
             Description = description,
             Icon = icon,
             Color = color,
+            CategoryType = categoryType,
             IsSystem = false,
             UserId = userId
         };
     }
 
-    public void Update(string name, string? description, string? icon, HexColor? color)
+    public void Update(string name, string? description, string? icon, HexColor? color, CategoryType categoryType)
     {
         Name = name;
         Description = description;
         Icon = icon;
         Color = color;
+        CategoryType = categoryType;
         SetUpdated();
     }
 

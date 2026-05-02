@@ -1,4 +1,5 @@
 using BudgetWise.Domain.Common.Pagination;
+using BudgetWise.Domain.Enums;
 
 namespace BudgetWise.Application.Categories.DTOs;
 
@@ -10,6 +11,7 @@ public sealed record CategoryResponse(
     string? Color,
     bool IsSystem,
     bool IsActive,
+    CategoryType CategoryType,
     Guid? UserId,
     DateTime CreatedAt,
     DateTime UpdatedAt
@@ -19,14 +21,16 @@ public sealed record CreateCategoryRequest(
     string Name,
     string? Description,
     string? Icon,
-    string? Color
+    string? Color,
+    CategoryType CategoryType = CategoryType.Both
 );
 
 public sealed record UpdateCategoryRequest(
     string Name,
     string? Description,
     string? Icon,
-    string? Color
+    string? Color,
+    CategoryType CategoryType = CategoryType.Both
 );
 
 public sealed record GetCategoriesRequest(
