@@ -26,6 +26,11 @@ public class FamilyMember : Entity
 
     public static FamilyMember CreateMember(Guid familyGroupId, Guid userId)
     {
+        // Id deve ser Guid.Empty porque a PK é gerada pelo banco (gen_random_uuid()).
+        // Quando adicionado à coleção Members de um FamilyGroup já rastreado,
+        // o EF Core usa o valor da chave para determinar o estado. Um Guid não-vazio
+        // faz o EF Core assumir que a entidade já existe no banco, marcando-a como
+        // Modified em vez de Added, o que causa DbUpdateConcurrencyException.
         return new FamilyMember
         {
             Id = Guid.Empty,
