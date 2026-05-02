@@ -101,7 +101,7 @@ public sealed class TransactionEndpointsTests(BudgetWiseWebFactory factory)
     // ── GET /transactions ─────────────────────────────────────────────────────
 
     [Fact]
-    public async Task GetList_ReturnsOnlyCurrentUserTransactions()
+    public async Task GetList_WithoutPaginationParams_Returns200WithDefaults()
     {
         var token = await AuthenticateAsync();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -109,12 +109,14 @@ public sealed class TransactionEndpointsTests(BudgetWiseWebFactory factory)
         await _client.PostAsJsonAsync("/api/v1/transactions", ValidCreateRequest());
         await _client.PostAsJsonAsync("/api/v1/transactions", ValidCreateRequest(TransactionType.Income));
 
-        var response = await _client.GetAsync("/api/v1/transactions?pageNumber=1&pageSize=20");
+        var response = await _client.GetAsync("/api/v1/transactions");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<PaginatedTransactionResponse>(JsonOptions);
         body.Should().NotBeNull();
         body!.Items.Should().HaveCountGreaterThanOrEqualTo(2);
+        body.PageNumber.Should().Be(1);
+        body.PageSize.Should().Be(20);
     }
 
     [Fact]

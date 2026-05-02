@@ -18,21 +18,21 @@ public class TransactionEndpoints : IEndpointModule
             .RequireAuthorization();
 
         group.MapGet("/", async (
-            [FromQuery] int pageNumber,
-            [FromQuery] int pageSize,
-            [FromQuery] TransactionType? type,
-            [FromQuery] Guid? categoryId,
-            [FromQuery] DateOnly? startDate,
-            [FromQuery] DateOnly? endDate,
-            [FromQuery] bool? isConfirmed,
             GetTransactionsUseCase useCase,
             ClaimsPrincipal user,
-            CancellationToken cancellationToken) =>
+            CancellationToken cancellationToken,
+            [FromQuery] int? pageNumber = null,
+            [FromQuery] int? pageSize = null,
+            [FromQuery] TransactionType? type = null,
+            [FromQuery] Guid? categoryId = null,
+            [FromQuery] DateOnly? startDate = null,
+            [FromQuery] DateOnly? endDate = null,
+            [FromQuery] bool? isConfirmed = null) =>
         {
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var request = new GetTransactionsRequest(
-                pageNumber < 1 ? 1 : pageNumber,
-                pageSize < 1 ? 20 : pageSize,
+                pageNumber is null or < 1 ? 1 : pageNumber.Value,
+                pageSize is null or < 1 ? 20 : pageSize.Value,
                 type, categoryId, startDate, endDate, isConfirmed);
             var result = await useCase.ExecuteAsync(request, userId, cancellationToken);
             return result.ToResponse(Results.Ok);
