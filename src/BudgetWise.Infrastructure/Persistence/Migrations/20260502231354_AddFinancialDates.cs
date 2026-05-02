@@ -23,6 +23,13 @@ namespace BudgetWise.Infrastructure.Persistence.Migrations
                 type: "date",
                 nullable: true);
 
+            migrationBuilder.Sql("""
+                UPDATE transactions
+                SET paid_at = transaction_date
+                WHERE is_confirmed = true
+                  AND paid_at IS NULL;
+                """);
+
             migrationBuilder.AddCheckConstraint(
                 name: "ck_transactions_paid_at",
                 table: "transactions",
