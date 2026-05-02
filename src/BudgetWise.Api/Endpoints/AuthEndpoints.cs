@@ -27,10 +27,12 @@ public class AuthEndpoints : IEndpointModule
         .WithSummary("Cria uma nova conta de usuário")
         .WithDescription("Registra um novo usuário e retorna o par de tokens (access + refresh).")
         .AllowAnonymous()
+        .RequireRateLimiting("AuthRegister")
         .AddEndpointFilter<ValidationFilter<RegisterUserRequest>>()
         .Produces<AuthResponse>(StatusCodes.Status201Created)
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status409Conflict);
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         group.MapPost("/login", async (
             LoginUserRequest request,
@@ -44,10 +46,12 @@ public class AuthEndpoints : IEndpointModule
         .WithSummary("Autentica um usuário e retorna tokens")
         .WithDescription("Valida credenciais e retorna o par de tokens. Conta bloqueada após 5 tentativas falhas.")
         .AllowAnonymous()
+        .RequireRateLimiting("AuthLogin")
         .AddEndpointFilter<ValidationFilter<LoginUserRequest>>()
         .Produces<AuthResponse>(StatusCodes.Status200OK)
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status401Unauthorized);
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         group.MapPost("/refresh", async (
             RefreshTokenRequest request,
@@ -61,10 +65,12 @@ public class AuthEndpoints : IEndpointModule
         .WithSummary("Renova o par de tokens via refresh token")
         .WithDescription("Rotação obrigatória: o refresh token anterior é invalidado e um novo par é gerado.")
         .AllowAnonymous()
+        .RequireRateLimiting("AuthRefresh")
         .AddEndpointFilter<ValidationFilter<RefreshTokenRequest>>()
         .Produces<AuthResponse>(StatusCodes.Status200OK)
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status401Unauthorized);
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
     }
 }
