@@ -110,7 +110,7 @@
 ---
 
 ## 🔧 Revisões Técnicas / Débito Técnico
-- 🔲 `PaginatedList<T>` — revisar desserialização com `System.Text.Json` (constructor parameters vs properties)
+- ✅ `PaginatedList<T>` — desserialização com `System.Text.Json` corrigida (construtor público adicionado)
 - 🔲 `Repository<T>` — revisar métodos genéricos restantes (`GetByIdAsync`, `GetPaginatedAsync`, `DeleteAsync`)
 - 🔲 `ForwardedHeaders` — suporte a produção atrás de reverse proxy
 - 🔲 Filtro de logs para health checks (evitar poluição de log por requisições de readiness/liveness)
