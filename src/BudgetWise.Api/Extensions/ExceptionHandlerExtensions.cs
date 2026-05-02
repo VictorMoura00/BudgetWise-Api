@@ -1,4 +1,5 @@
-﻿using BudgetWise.Domain.Exceptions;
+using System.Security.Claims;
+using BudgetWise.Domain.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -62,7 +63,14 @@ public class GlobalExceptionHandler(
                 return true;
 
             default:
-                logger.LogError(exception, "Unhandled exception: {Message}", exception.Message);
+                var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                logger.LogError(
+                    exception,
+                    "Unhandled exception: {Message} | TraceIdentifier: {TraceIdentifier} | UserId: {UserId}",
+                    exception.Message,
+                    httpContext.TraceIdentifier,
+                    userId ?? "anonymous");
 
                 var detail = environment.IsProduction()
                     ? "An unexpected error occurred. Please try again later."
