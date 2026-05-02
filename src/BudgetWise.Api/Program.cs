@@ -44,15 +44,18 @@ builder.Host.UseWolverine(opts =>
 }, ExtensionDiscovery.ManualOnly);
 
 // ── API ────────────────────────────────────────────────────────────────────
-builder.Services.AddCorsPolicy(builder.Environment);
+builder.Services.AddCorsPolicy(builder.Configuration);
 builder.Services.AddDocumentation();
 builder.Services.AddGlobalErrorHandler();
 builder.Services.AddHealthMonitoring(builder.Configuration);
+builder.Services.AddRateLimiting(builder.Configuration);
 
 // ── Pipeline HTTP ──────────────────────────────────────────────────────────
 var app = builder.Build();
 
 app.UseGlobalErrorHandler();
+app.UseSerilogRequestLoggingWithContext();
+app.UseRateLimiter();
 app.UseCorsPolicy();
 app.UseAuthentication();
 app.UseAuthorization();
