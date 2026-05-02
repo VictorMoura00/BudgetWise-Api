@@ -3,6 +3,7 @@ using HealthChecks.NpgSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
 using Testcontainers.PostgreSql;
 
 namespace BudgetWise.IntegrationTests.Infrastructure;
@@ -32,7 +34,15 @@ public sealed class BudgetWiseWebFactory : WebApplicationFactory<Program>, IAsyn
                 ["Jwt:Audience"] = "budgetwise-client",
                 ["Jwt:AccessTokenExpirationMinutes"] = "15",
                 ["Jwt:RefreshTokenExpirationDays"] = "7",
-                ["Seq:ServerUrl"] = ""
+                ["Seq:ServerUrl"] = "",
+                ["RateLimit:Auth:LoginPermitLimit"] = "10000",
+                ["RateLimit:Auth:LoginWindowMinutes"] = "1",
+                ["RateLimit:Auth:RefreshPermitLimit"] = "10000",
+                ["RateLimit:Auth:RefreshWindowMinutes"] = "1",
+                ["RateLimit:Auth:RegisterPermitLimit"] = "10000",
+                ["RateLimit:Auth:RegisterWindowMinutes"] = "1",
+                ["ADMIN__EMAIL"] = "admin@test.com",
+                ["ADMIN__PASSWORD"] = "Admin@123456"
             });
         });
 
@@ -76,6 +86,43 @@ public sealed class BudgetWiseWebFactory : WebApplicationFactory<Program>, IAsyn
                     failureStatus: HealthStatus.Unhealthy,
                     timeout: TimeSpan.FromSeconds(3),
                     tags: ["database", "ready"]);
+
+            // ── Rate Limiter ─────────────────────────────────────────────────
+            // Remove configurações originais e registra políticas com limites ilimitados para testes
+            var rateLimiterConfigDescriptors = services
+                .Where(d => d.ServiceType == typeof(IConfigureOptions<RateLimiterOptions>)
+                         || d.ServiceType == typeof(IPostConfigureOptions<RateLimiterOptions>))
+                .ToList();
+
+            foreach (var d in rateLimiterConfigDescriptors)
+                services.Remove(d);
+
+            services.Configure<RateLimiterOptions>(options =>
+            {
+                options.AddPolicy("AuthLogin", _ =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        "test", _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = int.MaxValue,
+                            Window = TimeSpan.FromMinutes(1)
+                        }));
+
+                options.AddPolicy("AuthRefresh", _ =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        "test", _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = int.MaxValue,
+                            Window = TimeSpan.FromMinutes(1)
+                        }));
+
+                options.AddPolicy("AuthRegister", _ =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        "test", _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = int.MaxValue,
+                            Window = TimeSpan.FromMinutes(1)
+                        }));
+            });
         });
 
         builder.UseEnvironment("Test");
