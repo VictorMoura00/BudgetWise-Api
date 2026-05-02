@@ -1,4 +1,4 @@
-﻿using BudgetWise.Domain.Common.Abstractions;
+using BudgetWise.Domain.Common.Abstractions;
 using BudgetWise.Domain.Common.Interfaces;
 using BudgetWise.Domain.Common.Pagination;
 using Microsoft.EntityFrameworkCore;
@@ -19,15 +19,13 @@ public abstract class Repository<T> : IRepository<T> where T : class, IAggregate
     public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => await DbSet.FindAsync([id], ct);
 
-    public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
-        => await DbSet.AsNoTracking().ToListAsync(ct);
-
     public virtual async Task AddAsync(T entity, CancellationToken ct = default)
         => await DbSet.AddAsync(entity, ct);
 
     public virtual Task UpdateAsync(T entity, CancellationToken ct = default)
     {
-        DbSet.Update(entity);
+        if (Context.Entry(entity).State == EntityState.Detached)
+            DbSet.Update(entity);
         return Task.CompletedTask;
     }
 

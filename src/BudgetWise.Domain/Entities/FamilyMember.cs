@@ -28,6 +28,7 @@ public class FamilyMember : Entity
     {
         return new FamilyMember
         {
+            Id = Guid.Empty,
             FamilyGroupId = familyGroupId,
             UserId = userId,
             Role = FamilyMemberRole.Member
