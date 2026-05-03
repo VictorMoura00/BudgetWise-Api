@@ -54,6 +54,17 @@ public interface ITransactionRepository : IRepository<Transaction>
         DateOnly previousEnd,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Transaction>> GetPendingForDueReportAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<CategoryTotalResult?> GetTopCategoryByTypeAsync(
+        Guid userId,
+        TransactionType type,
+        DateOnly startDate,
+        DateOnly endDate,
+        CancellationToken cancellationToken = default);
+
     Task<bool> IsTagLinkedAsync(
         Guid transactionId,
         Guid tagId,

@@ -247,6 +247,59 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
             .AsReadOnly();
     }
 
+    public async Task<IReadOnlyList<Transaction>> GetPendingForDueReportAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<Transaction>()
+            .AsNoTracking()
+            .Include(t => t.Category)
+            .Where(t => t.UserId == userId && t.DeletedAt == null && !t.IsConfirmed)
+            .OrderBy(t => t.DueDate)
+            .ThenBy(t => t.TransactionDate)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<CategoryTotalResult?> GetTopCategoryByTypeAsync(
+        Guid userId,
+        TransactionType type,
+        DateOnly startDate,
+        DateOnly endDate,
+        CancellationToken cancellationToken = default)
+    {
+        var top = await Context.Set<Transaction>()
+            .AsNoTracking()
+            .Where(t => t.UserId == userId && t.DeletedAt == null && t.Type == type
+                     && t.TransactionDate >= startDate && t.TransactionDate <= endDate)
+            .GroupBy(t => t.CategoryId)
+            .Select(g => new { CategoryId = g.Key, Amount = g.Sum(t => (decimal?)t.Amount) ?? 0m })
+            .OrderByDescending(g => g.Amount)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (top is null)
+            return null;
+
+        string name = "Sem categoria";
+        string? color = null;
+
+        if (top.CategoryId.HasValue)
+        {
+            var cat = await Context.Set<Category>()
+                .AsNoTracking()
+                .Where(c => c.Id == top.CategoryId.Value)
+                .Select(c => new { c.Name, c.Color })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (cat is not null)
+            {
+                name = cat.Name;
+                color = cat.Color;
+            }
+        }
+
+        return new CategoryTotalResult(top.CategoryId, name, color, top.Amount);
+    }
+
     public async Task<bool> IsTagLinkedAsync(
         Guid transactionId,
         Guid tagId,
