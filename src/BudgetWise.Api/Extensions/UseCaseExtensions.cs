@@ -23,6 +23,7 @@ public static class UseCaseExtensions
     {
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<IUserLookupService, UserLookupService>();
         return services;
     }
 }

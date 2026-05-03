@@ -35,3 +35,22 @@ public sealed record SharedExpenseResponse(
     DateTime UpdatedAt,
     IReadOnlyList<ParticipantResponse> Participants
 );
+
+public sealed record ParticipantSummaryResponse(
+    Guid UserId,
+    string UserName,
+    decimal AmountOwed,
+    decimal AmountSettled,
+    decimal AmountPending
+);
+
+public sealed record SharedExpenseSummaryResponse(
+    int TotalExpenses,
+    decimal TotalAmount,
+    decimal TotalSettled,
+    decimal TotalPending,
+    int FullySettledCount,
+    int PartiallySettledCount,
+    int UnsettledCount,
+    IReadOnlyList<ParticipantSummaryResponse> ParticipantTotals
+);

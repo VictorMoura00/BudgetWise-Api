@@ -31,6 +31,22 @@ public class SharedExpenseEndpoints : IEndpointModule
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        group.MapGet("/summary", async (
+            Guid familyGroupId,
+            GetSharedExpenseSummaryUseCase useCase,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await useCase.ExecuteAsync(familyGroupId, userId, cancellationToken);
+            return result.ToResponse(Results.Ok);
+        })
+        .WithName("GetSharedExpensesSummary")
+        .WithSummary("Retorna o resumo financeiro das despesas compartilhadas do grupo")
+        .Produces<SharedExpenseSummaryResponse>()
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status401Unauthorized);
+
         group.MapGet("/{id:guid}", async (
             Guid familyGroupId,
             Guid id,

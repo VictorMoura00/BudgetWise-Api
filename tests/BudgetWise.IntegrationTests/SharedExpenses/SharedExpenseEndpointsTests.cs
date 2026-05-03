@@ -292,6 +292,96 @@ public sealed class SharedExpenseEndpointsTests(BudgetWiseWebFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    // ── GET /family-groups/{id}/shared-expenses/summary ──────────────────────
+
+    [Fact]
+    public async Task GetSummary_WithNoExpenses_ReturnsZeroedSummary()
+    {
+        var (token, _) = await AuthenticateAsync();
+        var group = await CreateGroupAsync(token);
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await _client.GetAsync(
+            $"/api/v1/family-groups/{group.Id}/shared-expenses/summary");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<SharedExpenseSummaryResponse>(JsonOptions);
+        body.Should().NotBeNull();
+        body!.TotalExpenses.Should().Be(0);
+        body.TotalAmount.Should().Be(0m);
+        body.TotalSettled.Should().Be(0m);
+        body.TotalPending.Should().Be(0m);
+        body.FullySettledCount.Should().Be(0);
+        body.PartiallySettledCount.Should().Be(0);
+        body.UnsettledCount.Should().Be(0);
+        body.ParticipantTotals.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetSummary_WithExpenses_ReturnsCorrectedTotals()
+    {
+        var (token, userId) = await AuthenticateAsync();
+        var group = await CreateGroupAsync(token);
+        var (tokenB, userBId) = await AuthenticateAsync();
+        await JoinGroupAsync(tokenB, group.InviteCode);
+
+        // Create two expenses: one partially settled
+        var expense = await CreateSharedExpenseAsync(token, group.Id, userBId, total: 200m, participantShare: 200m);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await _client.PostAsync(
+            $"/api/v1/family-groups/{group.Id}/shared-expenses/{expense.Id}/participants/{userBId}/settle",
+            null);
+
+        await CreateSharedExpenseAsync(token, group.Id, userBId, total: 100m, participantShare: 100m);
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await _client.GetAsync(
+            $"/api/v1/family-groups/{group.Id}/shared-expenses/summary");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<SharedExpenseSummaryResponse>(JsonOptions);
+        body.Should().NotBeNull();
+        body!.TotalExpenses.Should().Be(2);
+        body.TotalAmount.Should().Be(300m);
+        body.TotalSettled.Should().Be(200m);
+        body.TotalPending.Should().Be(100m);
+        body.FullySettledCount.Should().Be(1);
+        body.UnsettledCount.Should().Be(1);
+        body.ParticipantTotals.Should().ContainSingle(p => p.UserId == userBId);
+
+        var participant = body.ParticipantTotals.Single(p => p.UserId == userBId);
+        participant.AmountOwed.Should().Be(300m);
+        participant.AmountSettled.Should().Be(200m);
+        participant.AmountPending.Should().Be(100m);
+        participant.UserName.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task GetSummary_WithoutAuth_Returns401()
+    {
+        _client.DefaultRequestHeaders.Authorization = null;
+
+        var response = await _client.GetAsync(
+            $"/api/v1/family-groups/{Guid.NewGuid()}/shared-expenses/summary");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetSummary_WhenNotMember_Returns403Or404()
+    {
+        var (tokenA, _) = await AuthenticateAsync();
+        var group = await CreateGroupAsync(tokenA);
+
+        var (tokenB, _) = await AuthenticateAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenB);
+
+        var response = await _client.GetAsync(
+            $"/api/v1/family-groups/{group.Id}/shared-expenses/summary");
+
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
+    }
+
     private async Task JoinGroupAsync(string token, string inviteCode)
     {
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
