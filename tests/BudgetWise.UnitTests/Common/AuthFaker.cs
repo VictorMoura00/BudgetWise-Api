@@ -27,5 +27,6 @@ public static class AuthFaker
         Id: Guid.NewGuid(),
         Email: Faker.Internet.Email(),
         FullName: Faker.Name.FullName(),
-        Role: role);
+        Role: role,
+        IsActive: true);
 }

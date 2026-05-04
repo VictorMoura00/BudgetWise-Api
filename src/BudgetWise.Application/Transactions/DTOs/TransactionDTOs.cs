@@ -65,7 +65,9 @@ public sealed record GetTransactionsRequest(
     Guid? CategoryId = null,
     DateOnly? StartDate = null,
     DateOnly? EndDate = null,
-    bool? IsConfirmed = null
+    bool? IsConfirmed = null,
+    Guid? FamilyGroupId = null,
+    PaymentMethod? PaymentMethod = null
 );
 
 public sealed record TransactionSummaryResponse(

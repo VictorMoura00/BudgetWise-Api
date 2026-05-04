@@ -3,6 +3,8 @@ namespace BudgetWise.Application.FamilyGroups.DTOs;
 public sealed record FamilyMemberResponse(
     Guid Id,
     Guid UserId,
+    string FullName,
+    string Email,
     string Role,
     DateTime JoinedAt);
 

@@ -3,6 +3,7 @@ using BudgetWise.Api.Filters;
 using BudgetWise.Application.Auth.Common;
 using BudgetWise.Application.Auth.DTOs;
 using BudgetWise.Application.Auth.UseCases;
+using System.Security.Claims;
 
 namespace BudgetWise.Api.Endpoints;
 
@@ -72,5 +73,19 @@ public class AuthEndpoints : IEndpointModule
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
+        group.MapGet("/me", async (
+            GetCurrentUserUseCase useCase,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await useCase.ExecuteAsync(userId, cancellationToken);
+            return result.ToResponse(Results.Ok);
+        })
+        .RequireAuthorization()
+        .WithName("GetCurrentUser")
+        .WithSummary("Retorna os dados do usuário autenticado")
+        .Produces<CurrentUserResponse>()
+        .ProducesProblem(StatusCodes.Status401Unauthorized);
     }
 }

@@ -36,7 +36,7 @@ public sealed class AuthService(UserManager<ApplicationUser> userManager) : IAut
             return AuthErrors.RegistrationFailed(errors);
         }
 
-        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role);
+        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role, user.IsActive);
     }
 
     public async Task<Result<AuthUserDto>> ValidateCredentialsAsync(
@@ -63,7 +63,7 @@ public sealed class AuthService(UserManager<ApplicationUser> userManager) : IAut
 
         await userManager.ResetAccessFailedCountAsync(user);
 
-        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role);
+        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role, user.IsActive);
     }
 
     public async Task<Result<AuthUserDto>> ValidateRefreshTokenAsync(
@@ -97,7 +97,7 @@ public sealed class AuthService(UserManager<ApplicationUser> userManager) : IAut
             return AuthErrors.InvalidRefreshToken;
         }
 
-        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role);
+        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role, user.IsActive);
     }
 
     public async Task StoreRefreshTokenAsync(
@@ -120,6 +120,17 @@ public sealed class AuthService(UserManager<ApplicationUser> userManager) : IAut
             loginProvider: LoginProvider,
             tokenName: RefreshTokenExpirationName,
             tokenValue: DateTime.UtcNow.AddDays(expirationDays).ToString("O"));
+    }
+
+    public async Task<Result<AuthUserDto>> GetByIdAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+            return AuthErrors.UserNotFound;
+
+        return new AuthUserDto(user.Id, user.Email!, user.FullName, user.Role, user.IsActive);
     }
 
     private async Task RemoveRefreshTokenAsync(ApplicationUser user)

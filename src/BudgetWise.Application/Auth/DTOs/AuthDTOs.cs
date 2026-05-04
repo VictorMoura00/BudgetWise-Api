@@ -23,3 +23,10 @@ public sealed record AuthResponse(
     string FullName,
     string AccessToken,
     string RefreshToken);
+
+public sealed record CurrentUserResponse(
+    Guid UserId,
+    string Email,
+    string FullName,
+    string Role,
+    bool IsActive);

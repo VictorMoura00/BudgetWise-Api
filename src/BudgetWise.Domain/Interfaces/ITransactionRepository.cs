@@ -16,6 +16,8 @@ public interface ITransactionRepository : IRepository<Transaction>
         DateOnly? startDate = null,
         DateOnly? endDate = null,
         bool? isConfirmed = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
         CancellationToken cancellationToken = default);
 
     Task<Transaction?> GetByIdForUserAsync(
@@ -27,11 +29,22 @@ public interface ITransactionRepository : IRepository<Transaction>
         Guid userId,
         DateOnly? startDate,
         DateOnly? endDate,
+        TransactionType? type = null,
+        bool? isConfirmed = null,
+        Guid? categoryId = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<MonthlySummaryResult>> GetMonthlySummaryForUserAsync(
         Guid userId,
-        int months,
+        DateOnly startDate,
+        DateOnly endDate,
+        TransactionType? type = null,
+        bool? isConfirmed = null,
+        Guid? categoryId = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
         CancellationToken cancellationToken = default);
 
     Task<Transaction?> GetLargestExpenseForUserAsync(
@@ -42,8 +55,8 @@ public interface ITransactionRepository : IRepository<Transaction>
 
     Task<MonthProjectionResult> GetMonthProjectionForUserAsync(
         Guid userId,
-        int year,
-        int month,
+        DateOnly startDate,
+        DateOnly endDate,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<CategoryComparisonResult>> GetCategoryComparisonForUserAsync(
@@ -63,6 +76,27 @@ public interface ITransactionRepository : IRepository<Transaction>
         TransactionType type,
         DateOnly startDate,
         DateOnly endDate,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<CategoryAnalysisResult>> GetCategoryAnalysisForUserAsync(
+        Guid userId,
+        DateOnly startDate,
+        DateOnly endDate,
+        TransactionType? type = null,
+        bool? isConfirmed = null,
+        Guid? categoryId = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Transaction>> GetTransactionsForPaymentStatusAsync(
+        Guid userId,
+        DateOnly startDate,
+        DateOnly endDate,
+        TransactionType? type = null,
+        Guid? categoryId = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
         CancellationToken cancellationToken = default);
 
     Task<bool> IsTagLinkedAsync(

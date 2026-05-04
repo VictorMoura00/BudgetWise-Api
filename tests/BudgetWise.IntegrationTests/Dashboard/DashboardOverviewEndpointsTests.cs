@@ -97,7 +97,7 @@ public sealed class DashboardOverviewEndpointsTests(BudgetWiseWebFactory factory
     }
 
     [Fact]
-    public async Task GetOverview_UsesPeriodFromQueryParams()
+    public async Task GetOverview_UsesPeriodFromYearMonthQueryParams()
     {
         var token = await AuthenticateAsync();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -106,9 +106,7 @@ public sealed class DashboardOverviewEndpointsTests(BudgetWiseWebFactory factory
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<DashboardOverviewResponse>(JsonOptions);
-        body!.Period.Year.Should().Be(2024);
-        body.Period.Month.Should().Be(3);
-        body.Period.StartDate.Should().Be(new DateOnly(2024, 3, 1));
+        body!.Period.StartDate.Should().Be(new DateOnly(2024, 3, 1));
         body.Period.EndDate.Should().Be(new DateOnly(2024, 3, 31));
     }
 
@@ -123,8 +121,33 @@ public sealed class DashboardOverviewEndpointsTests(BudgetWiseWebFactory factory
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<DashboardOverviewResponse>(JsonOptions);
-        body!.Period.Year.Should().Be(now.Year);
-        body.Period.Month.Should().Be(now.Month);
+        body!.Period.StartDate.Year.Should().Be(now.Year);
+        body.Period.StartDate.Month.Should().Be(now.Month);
+    }
+
+    [Fact]
+    public async Task GetOverview_WithStartDateAndEndDate_ReturnsCorrectPeriod()
+    {
+        var token = await AuthenticateAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _client.GetAsync("/api/v1/dashboard/overview?startDate=2025-03-10&endDate=2025-04-20");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<DashboardOverviewResponse>(JsonOptions);
+        body!.Period.StartDate.Should().Be(new DateOnly(2025, 3, 10));
+        body.Period.EndDate.Should().Be(new DateOnly(2025, 4, 20));
+    }
+
+    [Fact]
+    public async Task GetOverview_WithInvalidDateRange_Returns400()
+    {
+        var token = await AuthenticateAsync();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _client.GetAsync("/api/v1/dashboard/overview?startDate=2025-05-31&endDate=2025-05-01");
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]

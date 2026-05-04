@@ -21,9 +21,9 @@ public sealed class GetDashboardSummaryUseCase(ITransactionRepository repository
         var previousEnd = start.AddDays(-1);
         var previousStart = previousEnd.AddDays(-(duration - 1));
 
-        var summary = await repository.GetSummaryForUserAsync(userId, start, end, cancellationToken);
+        var summary = await repository.GetSummaryForUserAsync(userId, start, end, cancellationToken: cancellationToken);
         var largestExpense = await repository.GetLargestExpenseForUserAsync(userId, start, end, cancellationToken);
-        var projection = await repository.GetMonthProjectionForUserAsync(userId, today.Year, today.Month, cancellationToken);
+        var projection = await repository.GetMonthProjectionForUserAsync(userId, start, end, cancellationToken);
         var categoryComparison = await repository.GetCategoryComparisonForUserAsync(userId, start, end, previousStart, previousEnd, cancellationToken);
 
         var savingsRate = summary.TotalIncome > 0

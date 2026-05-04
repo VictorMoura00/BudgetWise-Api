@@ -19,6 +19,8 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
         DateOnly? startDate = null,
         DateOnly? endDate = null,
         bool? isConfirmed = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
         CancellationToken cancellationToken = default)
     {
         var query = Context.Set<Transaction>()
@@ -42,6 +44,12 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
 
         if (isConfirmed is not null)
             query = query.Where(t => t.IsConfirmed == isConfirmed);
+
+        if (familyGroupId is not null)
+            query = query.Where(t => t.FamilyGroupId == familyGroupId);
+
+        if (paymentMethod is not null)
+            query = query.Where(t => t.PaymentMethod == paymentMethod);
 
         query = query.OrderByDescending(t => t.TransactionDate)
                      .ThenByDescending(t => t.CreatedAt);
@@ -72,6 +80,11 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
         Guid userId,
         DateOnly? startDate,
         DateOnly? endDate,
+        TransactionType? type = null,
+        bool? isConfirmed = null,
+        Guid? categoryId = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
         CancellationToken cancellationToken = default)
     {
         var query = Context.Set<Transaction>()
@@ -83,6 +96,21 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
 
         if (endDate is not null)
             query = query.Where(t => t.TransactionDate <= endDate);
+
+        if (type is not null)
+            query = query.Where(t => t.Type == type);
+
+        if (isConfirmed is not null)
+            query = query.Where(t => t.IsConfirmed == isConfirmed);
+
+        if (categoryId is not null)
+            query = query.Where(t => t.CategoryId == categoryId);
+
+        if (familyGroupId is not null)
+            query = query.Where(t => t.FamilyGroupId == familyGroupId);
+
+        if (paymentMethod is not null)
+            query = query.Where(t => t.PaymentMethod == paymentMethod);
 
         var result = await query
             .GroupBy(_ => 1)
@@ -102,15 +130,36 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
 
     public async Task<IReadOnlyList<MonthlySummaryResult>> GetMonthlySummaryForUserAsync(
         Guid userId,
-        int months,
+        DateOnly startDate,
+        DateOnly endDate,
+        TransactionType? type = null,
+        bool? isConfirmed = null,
+        Guid? categoryId = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
         CancellationToken cancellationToken = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var startDate = new DateOnly(today.AddMonths(-(months - 1)).Year, today.AddMonths(-(months - 1)).Month, 1);
-
-        var items = await Context.Set<Transaction>()
+        var query = Context.Set<Transaction>()
             .AsNoTracking()
-            .Where(t => t.UserId == userId && t.DeletedAt == null && t.TransactionDate >= startDate)
+            .Where(t => t.UserId == userId && t.DeletedAt == null
+                     && t.TransactionDate >= startDate && t.TransactionDate <= endDate);
+
+        if (type is not null)
+            query = query.Where(t => t.Type == type);
+
+        if (isConfirmed is not null)
+            query = query.Where(t => t.IsConfirmed == isConfirmed);
+
+        if (categoryId is not null)
+            query = query.Where(t => t.CategoryId == categoryId);
+
+        if (familyGroupId is not null)
+            query = query.Where(t => t.FamilyGroupId == familyGroupId);
+
+        if (paymentMethod is not null)
+            query = query.Where(t => t.PaymentMethod == paymentMethod);
+
+        var items = await query
             .GroupBy(t => new { t.TransactionDate.Year, t.TransactionDate.Month })
             .Select(g => new
             {
@@ -146,13 +195,10 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
 
     public async Task<MonthProjectionResult> GetMonthProjectionForUserAsync(
         Guid userId,
-        int year,
-        int month,
+        DateOnly startDate,
+        DateOnly endDate,
         CancellationToken cancellationToken = default)
     {
-        var startDate = new DateOnly(year, month, 1);
-        var endDate = startDate.AddMonths(1).AddDays(-1);
-
         var result = await Context.Set<Transaction>()
             .AsNoTracking()
             .Where(t => t.UserId == userId && t.DeletedAt == null
@@ -298,6 +344,124 @@ public class TransactionRepository(AppDbContext context) : Repository<Transactio
         }
 
         return new CategoryTotalResult(top.CategoryId, name, color, top.Amount);
+    }
+
+    public async Task<IReadOnlyList<CategoryAnalysisResult>> GetCategoryAnalysisForUserAsync(
+        Guid userId,
+        DateOnly startDate,
+        DateOnly endDate,
+        TransactionType? type = null,
+        bool? isConfirmed = null,
+        Guid? categoryId = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = Context.Set<Transaction>()
+            .AsNoTracking()
+            .Where(t => t.UserId == userId && t.DeletedAt == null
+                     && t.TransactionDate >= startDate && t.TransactionDate <= endDate);
+
+        if (type is not null)
+            query = query.Where(t => t.Type == type);
+
+        if (isConfirmed is not null)
+            query = query.Where(t => t.IsConfirmed == isConfirmed);
+
+        if (categoryId is not null)
+            query = query.Where(t => t.CategoryId == categoryId);
+
+        if (familyGroupId is not null)
+            query = query.Where(t => t.FamilyGroupId == familyGroupId);
+
+        if (paymentMethod is not null)
+            query = query.Where(t => t.PaymentMethod == paymentMethod);
+
+        var grouped = await query
+            .GroupBy(t => t.CategoryId)
+            .Select(g => new
+            {
+                CategoryId = g.Key,
+                TotalAmount = g.Sum(t => (decimal?)t.Amount) ?? 0m,
+                TransactionCount = g.Count()
+            })
+            .OrderByDescending(g => g.TotalAmount)
+            .ToListAsync(cancellationToken);
+
+        var categoryIds = grouped
+            .Where(g => g.CategoryId.HasValue)
+            .Select(g => g.CategoryId!.Value)
+            .Distinct()
+            .ToList();
+
+        Dictionary<Guid, (string Name, string? Color, string? Icon)> categoryLookup;
+        if (categoryIds.Count > 0)
+        {
+            var cats = await Context.Set<Category>()
+                .AsNoTracking()
+                .Where(c => categoryIds.Contains(c.Id))
+                .Select(c => new { c.Id, c.Name, c.Color, c.Icon })
+                .ToListAsync(cancellationToken);
+            categoryLookup = cats.ToDictionary(c => c.Id, c => (c.Name, (string?)c.Color, c.Icon));
+        }
+        else
+        {
+            categoryLookup = [];
+        }
+
+        return grouped
+            .Select(g =>
+            {
+                string name = "Sem categoria";
+                string? color = null;
+                string? icon = null;
+
+                if (g.CategoryId.HasValue && categoryLookup.TryGetValue(g.CategoryId.Value, out var cat))
+                {
+                    name = cat.Name;
+                    color = cat.Color;
+                    icon = cat.Icon;
+                }
+
+                return new CategoryAnalysisResult(g.CategoryId, name, color, icon, g.TotalAmount, g.TransactionCount);
+            })
+            .ToList()
+            .AsReadOnly();
+    }
+
+    public async Task<IReadOnlyList<Transaction>> GetTransactionsForPaymentStatusAsync(
+        Guid userId,
+        DateOnly startDate,
+        DateOnly endDate,
+        TransactionType? type = null,
+        Guid? categoryId = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = Context.Set<Transaction>()
+            .AsNoTracking()
+            .Include(t => t.Category)
+            .Where(t => t.UserId == userId && t.DeletedAt == null
+                     && t.TransactionDate >= startDate && t.TransactionDate <= endDate);
+
+        if (type is not null)
+            query = query.Where(t => t.Type == type);
+
+        if (categoryId is not null)
+            query = query.Where(t => t.CategoryId == categoryId);
+
+        if (familyGroupId is not null)
+            query = query.Where(t => t.FamilyGroupId == familyGroupId);
+
+        if (paymentMethod is not null)
+            query = query.Where(t => t.PaymentMethod == paymentMethod);
+
+        return await query
+            .OrderBy(t => t.IsConfirmed)
+            .ThenBy(t => t.DueDate)
+            .ThenBy(t => t.TransactionDate)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<bool> IsTagLinkedAsync(

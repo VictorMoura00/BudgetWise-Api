@@ -25,6 +25,8 @@ public sealed class GetTransactionsUseCase(ITransactionRepository repository) : 
             request.StartDate,
             request.EndDate,
             request.IsConfirmed,
+            request.FamilyGroupId,
+            request.PaymentMethod,
             cancellationToken);
 
         var response = paged.Map(t =>

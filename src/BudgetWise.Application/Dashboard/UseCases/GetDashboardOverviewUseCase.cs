@@ -13,27 +13,58 @@ public sealed class GetDashboardOverviewUseCase(
 {
     public async Task<Result<DashboardOverviewResponse>> ExecuteAsync(
         Guid userId,
+        DateOnly? startDate = null,
+        DateOnly? endDate = null,
         int? year = null,
         int? month = null,
+        TransactionType? type = null,
+        bool? isConfirmed = null,
+        Guid? categoryId = null,
+        Guid? familyGroupId = null,
+        PaymentMethod? paymentMethod = null,
         CancellationToken cancellationToken = default)
     {
         var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().DateTime);
-        var y = year ?? today.Year;
-        var m = month ?? today.Month;
 
-        var currentStart = new DateOnly(y, m, 1);
-        var currentEnd = new DateOnly(y, m, DateTime.DaysInMonth(y, m));
+        DateOnly currentStart;
+        DateOnly currentEnd;
+
+        if (startDate is not null && endDate is not null)
+        {
+            currentStart = startDate.Value;
+            currentEnd = endDate.Value;
+        }
+        else if (year is not null || month is not null)
+        {
+            var y = year ?? today.Year;
+            var m = month ?? today.Month;
+            currentStart = new DateOnly(y, m, 1);
+            currentEnd = new DateOnly(y, m, DateTime.DaysInMonth(y, m));
+        }
+        else
+        {
+            currentStart = new DateOnly(today.Year, today.Month, 1);
+            currentEnd = new DateOnly(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+        }
+
+        if (currentStart > currentEnd)
+            return Result<DashboardOverviewResponse>.Failure(
+                Error.Validation("Dashboard.InvalidDateRange", "startDate must be less than or equal to endDate."));
+
         var previousEnd = currentStart.AddDays(-1);
         var previousStart = new DateOnly(previousEnd.Year, previousEnd.Month, 1);
 
         var currentSummary = await repository.GetSummaryForUserAsync(
-            userId, currentStart, currentEnd, cancellationToken);
+            userId, currentStart, currentEnd,
+            type, isConfirmed, categoryId, familyGroupId, paymentMethod,
+            cancellationToken);
 
         var previousSummary = await repository.GetSummaryForUserAsync(
-            userId, previousStart, previousEnd, cancellationToken);
+            userId, previousStart, previousEnd,
+            cancellationToken: cancellationToken);
 
         var projection = await repository.GetMonthProjectionForUserAsync(
-            userId, y, m, cancellationToken);
+            userId, currentStart, currentEnd, cancellationToken);
 
         var largestExpense = await repository.GetLargestExpenseForUserAsync(
             userId, currentStart, currentEnd, cancellationToken);
@@ -123,7 +154,7 @@ public sealed class GetDashboardOverviewUseCase(
                 : null);
 
         return Result<DashboardOverviewResponse>.Success(new DashboardOverviewResponse(
-            Period: new PeriodInfo(y, m, currentStart, currentEnd),
+            Period: new PeriodInfo(currentStart, currentEnd),
             FinancialSummary: financialSummary,
             PendingSummary: pendingSummary,
             CategoryHighlights: categoryHighlights,

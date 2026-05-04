@@ -3,8 +3,6 @@ using BudgetWise.Domain.Enums;
 namespace BudgetWise.Application.Dashboard.DTOs;
 
 public sealed record PeriodInfo(
-    int Year,
-    int Month,
     DateOnly StartDate,
     DateOnly EndDate
 );

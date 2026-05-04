@@ -43,6 +43,10 @@ public interface IAuthService
         string refreshToken,
         int expirationDays,
         CancellationToken cancellationToken = default);
+
+    Task<Result<AuthUserDto>> GetByIdAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -53,5 +57,6 @@ public sealed record AuthUserDto(
     Guid Id,
     string Email,
     string FullName,
-    UserRole Role
+    UserRole Role,
+    bool IsActive
 );

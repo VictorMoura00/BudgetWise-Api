@@ -27,13 +27,15 @@ public class TransactionEndpoints : IEndpointModule
             [FromQuery] Guid? categoryId = null,
             [FromQuery] DateOnly? startDate = null,
             [FromQuery] DateOnly? endDate = null,
-            [FromQuery] bool? isConfirmed = null) =>
+            [FromQuery] bool? isConfirmed = null,
+            [FromQuery] Guid? familyGroupId = null,
+            [FromQuery] PaymentMethod? paymentMethod = null) =>
         {
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var request = new GetTransactionsRequest(
                 pageNumber is null or < 1 ? 1 : pageNumber.Value,
                 pageSize is null or < 1 ? 20 : pageSize.Value,
-                type, categoryId, startDate, endDate, isConfirmed);
+                type, categoryId, startDate, endDate, isConfirmed, familyGroupId, paymentMethod);
             var result = await useCase.ExecuteAsync(request, userId, cancellationToken);
             return result.ToResponse(Results.Ok);
         })
@@ -59,14 +61,20 @@ public class TransactionEndpoints : IEndpointModule
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapGet("/summary", async (
-            [FromQuery] DateOnly? startDate,
-            [FromQuery] DateOnly? endDate,
             GetTransactionSummaryUseCase useCase,
             ClaimsPrincipal user,
-            CancellationToken cancellationToken) =>
+            CancellationToken cancellationToken,
+            [FromQuery] DateOnly? startDate = null,
+            [FromQuery] DateOnly? endDate = null,
+            [FromQuery] TransactionType? type = null,
+            [FromQuery] bool? isConfirmed = null,
+            [FromQuery] Guid? categoryId = null,
+            [FromQuery] Guid? familyGroupId = null,
+            [FromQuery] PaymentMethod? paymentMethod = null) =>
         {
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var result = await useCase.ExecuteAsync(userId, startDate, endDate, cancellationToken);
+            var result = await useCase.ExecuteAsync(
+                userId, startDate, endDate, type, isConfirmed, categoryId, familyGroupId, paymentMethod, cancellationToken);
             return result.ToResponse(Results.Ok);
         })
         .WithName("GetTransactionSummary")
@@ -75,17 +83,44 @@ public class TransactionEndpoints : IEndpointModule
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapGet("/monthly-summary", async (
-            [FromQuery] int months,
             GetMonthlySummaryUseCase useCase,
+            TimeProvider timeProvider,
             ClaimsPrincipal user,
-            CancellationToken cancellationToken) =>
+            CancellationToken cancellationToken,
+            [FromQuery] DateOnly? startDate = null,
+            [FromQuery] DateOnly? endDate = null,
+            [FromQuery] int? months = null,
+            [FromQuery] TransactionType? type = null,
+            [FromQuery] bool? isConfirmed = null,
+            [FromQuery] Guid? categoryId = null,
+            [FromQuery] Guid? familyGroupId = null,
+            [FromQuery] PaymentMethod? paymentMethod = null) =>
         {
             var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var result = await useCase.ExecuteAsync(userId, months < 1 ? 6 : months, cancellationToken);
+
+            DateOnly start;
+            DateOnly end;
+
+            if (startDate is not null && endDate is not null)
+            {
+                start = startDate.Value;
+                end = endDate.Value;
+            }
+            else
+            {
+                var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().DateTime);
+                var m = months is null or < 1 ? 6 : (months.Value > 24 ? 24 : months.Value);
+                end = new DateOnly(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+                var startMonth = today.AddMonths(-(m - 1));
+                start = new DateOnly(startMonth.Year, startMonth.Month, 1);
+            }
+
+            var result = await useCase.ExecuteAsync(
+                userId, start, end, type, isConfirmed, categoryId, familyGroupId, paymentMethod, cancellationToken);
             return result.ToResponse(Results.Ok);
         })
         .WithName("GetMonthlySummary")
-        .WithSummary("Retorna evolução mensal de receitas e despesas (padrão: 6 meses)")
+        .WithSummary("Retorna evolução mensal de receitas e despesas agrupada por mês")
         .Produces<IReadOnlyList<MonthlySummaryResponse>>()
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 

@@ -24,9 +24,13 @@ public sealed class GetDashboardOverviewUseCaseTests
 
         var empty = new TransactionSummaryResult(0m, 0m, 0, 0m);
         var emptyProjection = new MonthProjectionResult(0m, 0m, 0m);
-        _repository.GetSummaryForUserAsync(UserId, Arg.Any<DateOnly?>(), Arg.Any<DateOnly?>(), Arg.Any<CancellationToken>())
+        _repository.GetSummaryForUserAsync(
+                UserId,
+                Arg.Any<DateOnly?>(), Arg.Any<DateOnly?>(),
+                Arg.Any<TransactionType?>(), Arg.Any<bool?>(), Arg.Any<Guid?>(), Arg.Any<Guid?>(), Arg.Any<PaymentMethod?>(),
+                Arg.Any<CancellationToken>())
             .Returns(empty);
-        _repository.GetMonthProjectionForUserAsync(UserId, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _repository.GetMonthProjectionForUserAsync(UserId, Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>())
             .Returns(emptyProjection);
         _repository.GetLargestExpenseForUserAsync(UserId, Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>())
             .Returns((Transaction?)null);
@@ -43,13 +47,13 @@ public sealed class GetDashboardOverviewUseCaseTests
         Transaction.Create(UserId, "Test", amount, type, date, isConfirmed: isConfirmed, dueDate: dueDate);
 
     [Fact]
-    public async Task ExecuteAsync_DefaultsToCurrentYearMonth_WhenNotProvided()
+    public async Task ExecuteAsync_DefaultsToCurrentMonth_WhenNoParamsProvided()
     {
         var result = await _sut.ExecuteAsync(UserId);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Period.Year.Should().Be(2026);
-        result.Value.Period.Month.Should().Be(5);
+        result.Value.Period.StartDate.Should().Be(new DateOnly(2026, 5, 1));
+        result.Value.Period.EndDate.Should().Be(new DateOnly(2026, 5, 31));
     }
 
     [Fact]
@@ -57,21 +61,58 @@ public sealed class GetDashboardOverviewUseCaseTests
     {
         var result = await _sut.ExecuteAsync(UserId, year: 2025, month: 3);
 
-        result.Value.Period.Year.Should().Be(2025);
-        result.Value.Period.Month.Should().Be(3);
         result.Value.Period.StartDate.Should().Be(new DateOnly(2025, 3, 1));
         result.Value.Period.EndDate.Should().Be(new DateOnly(2025, 3, 31));
     }
 
     [Fact]
+    public async Task ExecuteAsync_WithStartDateAndEndDate_UsesThem()
+    {
+        var start = new DateOnly(2026, 3, 10);
+        var end = new DateOnly(2026, 4, 20);
+
+        var result = await _sut.ExecuteAsync(UserId, startDate: start, endDate: end);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Period.StartDate.Should().Be(start);
+        result.Value.Period.EndDate.Should().Be(end);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_StartDateAfterEndDate_ReturnsValidationError()
+    {
+        var result = await _sut.ExecuteAsync(UserId,
+            startDate: new DateOnly(2026, 5, 31),
+            endDate: new DateOnly(2026, 5, 1));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Code.Should().Be("Dashboard.InvalidDateRange");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_StartDateAndEndDateTakePriorityOverYearMonth()
+    {
+        var start = new DateOnly(2026, 3, 10);
+        var end = new DateOnly(2026, 4, 20);
+
+        var result = await _sut.ExecuteAsync(UserId, startDate: start, endDate: end, year: 2025, month: 1);
+
+        result.Value.Period.StartDate.Should().Be(start);
+        result.Value.Period.EndDate.Should().Be(end);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_FinancialSummary_ReflectsRepositoryData()
     {
-        _repository.GetSummaryForUserAsync(UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31), Arg.Any<CancellationToken>())
+        _repository.GetSummaryForUserAsync(
+                UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31),
+                null, null, null, null, null,
+                Arg.Any<CancellationToken>())
             .Returns(new TransactionSummaryResult(1000m, 400m, 2, 200m));
-        _repository.GetMonthProjectionForUserAsync(UserId, 2026, 5, Arg.Any<CancellationToken>())
+        _repository.GetMonthProjectionForUserAsync(UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31), Arg.Any<CancellationToken>())
             .Returns(new MonthProjectionResult(600m, -200m, 400m));
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         var fs = result.Value.FinancialSummary;
         fs.TotalIncome.Should().Be(1000m);
@@ -86,12 +127,34 @@ public sealed class GetDashboardOverviewUseCaseTests
     [Fact]
     public async Task ExecuteAsync_SavingsRate_IsNullWhenNoIncome()
     {
-        _repository.GetSummaryForUserAsync(UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31), Arg.Any<CancellationToken>())
+        _repository.GetSummaryForUserAsync(
+                UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31),
+                null, null, null, null, null,
+                Arg.Any<CancellationToken>())
             .Returns(new TransactionSummaryResult(0m, 500m, 0, 0m));
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         result.Value.FinancialSummary.SavingsRate.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithTypeFilter_PassedOnlyToCurrentSummary()
+    {
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5, type: TransactionType.Expense);
+
+        result.IsSuccess.Should().BeTrue();
+
+        await _repository.Received(1).GetSummaryForUserAsync(
+            UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31),
+            TransactionType.Expense, null, null, null, null,
+            Arg.Any<CancellationToken>());
+
+        // previous month summary must NOT receive the type filter
+        await _repository.Received(1).GetSummaryForUserAsync(
+            UserId, new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 30),
+            null, null, null, null, null,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -109,7 +172,7 @@ public sealed class GetDashboardOverviewUseCaseTests
         _repository.GetPendingForDueReportAsync(UserId, Arg.Any<CancellationToken>())
             .Returns(pending);
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         var ps = result.Value.PendingSummary;
         ps.TotalPendingCount.Should().Be(6);
@@ -131,7 +194,7 @@ public sealed class GetDashboardOverviewUseCaseTests
     [Fact]
     public async Task ExecuteAsync_PendingSummary_IsZeroed_WhenNoPendingTransactions()
     {
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         var ps = result.Value.PendingSummary;
         ps.TotalPendingCount.Should().Be(0);
@@ -149,7 +212,7 @@ public sealed class GetDashboardOverviewUseCaseTests
                 new CategoryComparisonResult(Guid.NewGuid(), "Transport", "#00FF00", 200m, 100m),
             ]);
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         var top = result.Value.CategoryHighlights.TopExpenseCategory;
         top.Should().NotBeNull();
@@ -161,7 +224,7 @@ public sealed class GetDashboardOverviewUseCaseTests
     [Fact]
     public async Task ExecuteAsync_CategoryHighlights_TopExpense_IsNull_WhenNoCategoryData()
     {
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         result.Value.CategoryHighlights.TopExpenseCategory.Should().BeNull();
     }
@@ -175,7 +238,7 @@ public sealed class GetDashboardOverviewUseCaseTests
                 new CategoryComparisonResult(Guid.NewGuid(), "Leisure", null, 300m, 100m),
             ]);
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         var fg = result.Value.CategoryHighlights.FastestGrowingCategory;
         fg.Should().NotBeNull();
@@ -191,7 +254,7 @@ public sealed class GetDashboardOverviewUseCaseTests
                 new CategoryComparisonResult(Guid.NewGuid(), "Food", null, 500m, 600m),
             ]);
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         result.Value.CategoryHighlights.FastestGrowingCategory.Should().BeNull();
     }
@@ -203,7 +266,7 @@ public sealed class GetDashboardOverviewUseCaseTests
         _repository.GetTopCategoryByTypeAsync(UserId, TransactionType.Income, Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>())
             .Returns(new CategoryTotalResult(catId, "Salary", "#AABBCC", 3000m));
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         var topIncome = result.Value.CategoryHighlights.TopIncomeCategory;
         topIncome.Should().NotBeNull();
@@ -222,7 +285,7 @@ public sealed class GetDashboardOverviewUseCaseTests
                 new CategoryComparisonResult(Guid.NewGuid(), "C", null, 50m, 0m),
             ]);
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         result.Value.CategoryHighlights.TotalExpenseCategories.Should().Be(2);
     }
@@ -230,7 +293,7 @@ public sealed class GetDashboardOverviewUseCaseTests
     [Fact]
     public async Task ExecuteAsync_LargestExpense_IsNull_WhenNoExpenses()
     {
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         result.Value.LargestExpense.Should().BeNull();
     }
@@ -242,7 +305,7 @@ public sealed class GetDashboardOverviewUseCaseTests
         _repository.GetLargestExpenseForUserAsync(UserId, Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>())
             .Returns(t);
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         var le = result.Value.LargestExpense;
         le.Should().NotBeNull();
@@ -254,12 +317,18 @@ public sealed class GetDashboardOverviewUseCaseTests
     [Fact]
     public async Task ExecuteAsync_MonthlyComparison_ComputesDiffsCorrectly()
     {
-        _repository.GetSummaryForUserAsync(UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31), Arg.Any<CancellationToken>())
+        _repository.GetSummaryForUserAsync(
+                UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31),
+                null, null, null, null, null,
+                Arg.Any<CancellationToken>())
             .Returns(new TransactionSummaryResult(1200m, 800m, 0, 0m));
-        _repository.GetSummaryForUserAsync(UserId, new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 30), Arg.Any<CancellationToken>())
+        _repository.GetSummaryForUserAsync(
+                UserId, new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 30),
+                null, null, null, null, null,
+                Arg.Any<CancellationToken>())
             .Returns(new TransactionSummaryResult(1000m, 600m, 0, 0m));
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         var mc = result.Value.MonthlyComparison;
         mc.PreviousIncome.Should().Be(1000m);
@@ -273,10 +342,13 @@ public sealed class GetDashboardOverviewUseCaseTests
     [Fact]
     public async Task ExecuteAsync_MonthlyComparison_PercentIsNull_WhenNoPreviousData()
     {
-        _repository.GetSummaryForUserAsync(UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31), Arg.Any<CancellationToken>())
+        _repository.GetSummaryForUserAsync(
+                UserId, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31),
+                null, null, null, null, null,
+                Arg.Any<CancellationToken>())
             .Returns(new TransactionSummaryResult(500m, 300m, 0, 0m));
 
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         result.Value.MonthlyComparison.IncomeDiffPercent.Should().BeNull();
         result.Value.MonthlyComparison.ExpenseDiffPercent.Should().BeNull();
@@ -285,7 +357,7 @@ public sealed class GetDashboardOverviewUseCaseTests
     [Fact]
     public async Task ExecuteAsync_WithNoData_ReturnsSuccessWithZeroedValues()
     {
-        var result = await _sut.ExecuteAsync(UserId, 2026, 5);
+        var result = await _sut.ExecuteAsync(UserId, year: 2026, month: 5);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.FinancialSummary.TotalIncome.Should().Be(0m);

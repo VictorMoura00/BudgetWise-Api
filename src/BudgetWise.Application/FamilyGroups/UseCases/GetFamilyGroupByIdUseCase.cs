@@ -8,7 +8,8 @@ using BudgetWise.Domain.Interfaces;
 namespace BudgetWise.Application.FamilyGroups.UseCases;
 
 public sealed class GetFamilyGroupByIdUseCase(
-    IFamilyGroupRepository repository) : IUseCase
+    IFamilyGroupRepository repository,
+    IUserLookupService userLookupService) : IUseCase
 {
     public async Task<Result<FamilyGroupResponse>> ExecuteAsync(
         Guid id,
@@ -23,11 +24,27 @@ public sealed class GetFamilyGroupByIdUseCase(
         if (!group.Members.Any(m => m.UserId == userId))
             return FamilyGroupErrors.NotMember(id);
 
-        return MapToResponse(group);
+        var memberUserIds = group.Members.Select(m => m.UserId);
+        var userInfos = await userLookupService.GetUserInfosByIdsAsync(memberUserIds, cancellationToken);
+
+        return MapToResponse(group, userInfos);
     }
 
-    private static FamilyGroupResponse MapToResponse(FamilyGroup group) =>
+    private static FamilyGroupResponse MapToResponse(
+        FamilyGroup group,
+        IReadOnlyDictionary<Guid, UserInfo> userInfos) =>
         new(group.Id, group.Name, group.Description, group.InviteCode,
             group.CreatedAt, group.UpdatedAt,
-            group.Members.Select(m => new FamilyMemberResponse(m.Id, m.UserId, m.Role.ToString(), m.JoinedAt)).ToList());
+            group.Members
+                .Select(m =>
+                {
+                    userInfos.TryGetValue(m.UserId, out var info);
+                    return new FamilyMemberResponse(
+                        m.Id, m.UserId,
+                        info?.FullName ?? string.Empty,
+                        info?.Email ?? string.Empty,
+                        m.Role.ToString(),
+                        m.JoinedAt);
+                })
+                .ToList());
 }

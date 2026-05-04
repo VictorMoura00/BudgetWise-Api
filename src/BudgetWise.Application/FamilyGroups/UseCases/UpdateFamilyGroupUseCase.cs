@@ -41,5 +41,5 @@ public sealed class UpdateFamilyGroupUseCase(
     private static FamilyGroupResponse MapToResponse(FamilyGroup group) =>
         new(group.Id, group.Name, group.Description, group.InviteCode,
             group.CreatedAt, group.UpdatedAt,
-            group.Members.Select(m => new FamilyMemberResponse(m.Id, m.UserId, m.Role.ToString(), m.JoinedAt)).ToList());
+            group.Members.Select(m => new FamilyMemberResponse(m.Id, m.UserId, string.Empty, string.Empty, m.Role.ToString(), m.JoinedAt)).ToList());
 }

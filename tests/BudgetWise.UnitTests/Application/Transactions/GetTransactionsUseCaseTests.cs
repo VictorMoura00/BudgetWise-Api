@@ -32,7 +32,8 @@ public sealed class GetTransactionsUseCaseTests
         };
         var paged = new PaginatedList<Transaction>(transactions, 2, 1, 20);
 
-        _repository.GetTransactionsForUserAsync(UserId, 1, 20, null, null, null, null, null, Arg.Any<CancellationToken>())
+        _repository.GetTransactionsForUserAsync(
+                UserId, 1, 20, null, null, null, null, null, null, null, Arg.Any<CancellationToken>())
             .Returns(paged);
 
         var request = new GetTransactionsRequest(1, 20);
@@ -50,10 +51,11 @@ public sealed class GetTransactionsUseCaseTests
         var paged = new PaginatedList<Transaction>([], 0, 1, 20);
 
         _repository.GetTransactionsForUserAsync(
-            UserId, 1, 20,
-            TransactionType.Expense, categoryId,
-            Today, Today.AddDays(30), true,
-            Arg.Any<CancellationToken>()).Returns(paged);
+                UserId, 1, 20,
+                TransactionType.Expense, categoryId,
+                Today, Today.AddDays(30), true, null, null,
+                Arg.Any<CancellationToken>())
+            .Returns(paged);
 
         var request = new GetTransactionsRequest(1, 20, TransactionType.Expense, categoryId, Today, Today.AddDays(30), true);
         var result = await _sut.ExecuteAsync(request, UserId);
@@ -62,7 +64,7 @@ public sealed class GetTransactionsUseCaseTests
         await _repository.Received(1).GetTransactionsForUserAsync(
             UserId, 1, 20,
             TransactionType.Expense, categoryId,
-            Today, Today.AddDays(30), true,
+            Today, Today.AddDays(30), true, null, null,
             Arg.Any<CancellationToken>());
     }
 
@@ -70,7 +72,8 @@ public sealed class GetTransactionsUseCaseTests
     public async Task ExecuteAsync_WithInvalidPaging_NormalizesToMinimum()
     {
         var paged = new PaginatedList<Transaction>([], 0, 1, 20);
-        _repository.GetTransactionsForUserAsync(UserId, 1, 20, null, null, null, null, null, Arg.Any<CancellationToken>())
+        _repository.GetTransactionsForUserAsync(
+                UserId, 1, 20, null, null, null, null, null, null, null, Arg.Any<CancellationToken>())
             .Returns(paged);
 
         var request = new GetTransactionsRequest(0, -5);
@@ -78,6 +81,6 @@ public sealed class GetTransactionsUseCaseTests
 
         result.IsSuccess.Should().BeTrue();
         await _repository.Received(1).GetTransactionsForUserAsync(
-            UserId, 1, 20, null, null, null, null, null, Arg.Any<CancellationToken>());
+            UserId, 1, 20, null, null, null, null, null, null, null, Arg.Any<CancellationToken>());
     }
 }
